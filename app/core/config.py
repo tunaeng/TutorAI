@@ -20,14 +20,10 @@ class Settings(BaseSettings):
     # Environment
     environment: Environment = Field(default=Environment.LOCAL, env="ENVIRONMENT")
     
-    # Database URLs
-    database_url_local: str = Field(
-        default="sqlite+aiosqlite:///./ai_tutor_local.db",
-        env="DATABASE_URL_LOCAL"
-    )
-    database_url_prod: str = Field(
-        default="postgresql+asyncpg://user:pass@host:5432/ai_tutor_prod",
-        env="DATABASE_URL_PROD"
+    # Database URL
+    database_url: str = Field(
+        default="postgresql+asyncpg://user:password@localhost:5432/ai_tutor_local",
+        env="DATABASE_URL"
     )
     
     # Application
@@ -49,12 +45,6 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = Field(default="INFO", env="LOG_LEVEL")
     
-    @property
-    def database_url(self) -> str:
-        """Get database URL based on current environment"""
-        if self.environment == Environment.PROD:
-            return self.database_url_prod
-        return self.database_url_local
     
     @property
     def is_production(self) -> bool:

@@ -53,26 +53,25 @@ ai-tutor-platform/
    pip install -r requirements.txt
    ```
 
-2. **Создайте .env файл:**
-   ```bash
-   copy env.example .env
-   ```
+2. **Настройте PostgreSQL:**
    
-   Отредактируйте `.env` файл:
+   Следуйте инструкциям в [POSTGRESQL_SETUP.md](POSTGRESQL_SETUP.md) для установки и настройки PostgreSQL.
+   
+   Файл `.env` уже создан с правильными настройками:
    ```env
+   DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/ai_tutor_local
    ENVIRONMENT=LOCAL
-   DATABASE_URL_LOCAL=postgresql+asyncpg://user:pass@localhost:5432/ai_tutor_local
-   DATABASE_URL_PROD=postgresql+asyncpg://user:pass@host:5432/ai_tutor_prod
+   DEBUG=True
    ```
 
-3. **Создайте первую миграцию:**
+3. **Инициализируйте базу данных:**
    ```bash
-   alembic revision --autogenerate -m "Initial migration"
+   python init_db.py
    ```
 
-4. **Примените миграции:**
+4. **Запустите миграции:**
    ```bash
-   alembic upgrade head
+   python run_migrations.py
    ```
 
 5. **Запустите приложение:**
@@ -94,12 +93,11 @@ ai-tutor-platform/
 Основные переменные в `.env`:
 
 ```env
+# База данных
+DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/ai_tutor_local
+
 # Окружение (LOCAL/PROD)
 ENVIRONMENT=LOCAL
-
-# База данных
-DATABASE_URL_LOCAL=postgresql+asyncpg://user:pass@localhost:5432/ai_tutor_local
-DATABASE_URL_PROD=postgresql+asyncpg://user:pass@host:5432/ai_tutor_prod
 
 # Приложение
 APP_NAME=AI Tutor Backend
@@ -125,10 +123,12 @@ LOG_LEVEL=INFO
 
 ### Переключение между базами данных
 
-Система автоматически переключается между локальной и продакшн базой данных в зависимости от переменной `ENVIRONMENT`:
+Для переключения на продакшн базу данных просто измените `DATABASE_URL` в `.env` файле:
 
-- `ENVIRONMENT=LOCAL` → использует `DATABASE_URL_LOCAL`
-- `ENVIRONMENT=PROD` → использует `DATABASE_URL_PROD`
+```env
+DATABASE_URL=postgresql+asyncpg://prod_user:prod_password@prod_host:5432/ai_tutor_prod
+ENVIRONMENT=PROD
+```
 
 ## 📚 API Документация
 

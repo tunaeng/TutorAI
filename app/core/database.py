@@ -1,5 +1,5 @@
 """
-Database configuration with async SQLAlchemy setup
+Database configuration with async SQLAlchemy setup for PostgreSQL
 """
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
