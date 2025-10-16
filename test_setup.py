@@ -34,7 +34,8 @@ async def test_database_connection():
     try:
         engine = get_engine()
         async with engine.begin() as conn:
-            result = await conn.execute("SELECT 1 as test")
+            from sqlalchemy import text
+            result = await conn.execute(text("SELECT 1 as test"))
             row = result.fetchone()
             if row and row[0] == 1:
                 print("  ✅ Database connection successful")
@@ -83,12 +84,13 @@ async def test_tables_exist():
     try:
         engine = get_engine()
         async with engine.begin() as conn:
-            result = await conn.execute("""
+            from sqlalchemy import text
+            result = await conn.execute(text("""
                 SELECT table_name 
                 FROM information_schema.tables 
                 WHERE table_schema = 'public' 
                 ORDER BY table_name
-            """)
+            """))
             tables = [row[0] for row in result.fetchall()]
             
             expected_tables = [
@@ -120,12 +122,13 @@ async def test_enums():
     try:
         engine = get_engine()
         async with engine.begin() as conn:
-            result = await conn.execute("""
+            from sqlalchemy import text
+            result = await conn.execute(text("""
                 SELECT typname 
                 FROM pg_type 
                 WHERE typtype = 'e' 
                 ORDER BY typname
-            """)
+            """))
             enums = [row[0] for row in result.fetchall()]
             
             expected_enums = [
