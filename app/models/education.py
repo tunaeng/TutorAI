@@ -8,7 +8,7 @@ from datetime import datetime, date, time
 from typing import Optional, List
 from sqlalchemy import (
     Column, BigInteger, String, Text, Boolean, DateTime, Date, Time,
-    ForeignKey, Table, Enum as SQLEnum, Integer, CheckConstraint
+    ForeignKey, Table, Enum as SQLEnum, Integer, CheckConstraint, Index
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
@@ -53,7 +53,7 @@ students_streams = Table(
     Base.metadata,
     Column('student_id', BigInteger, ForeignKey('students.student_id', ondelete='CASCADE'), primary_key=True),
     Column('stream_id', BigInteger, ForeignKey('streams.stream_id', ondelete='CASCADE'), primary_key=True),
-    Column('enrolled_at', DateTime, default=func.now())
+    Column('enrolled_at', DateTime(timezone=True), default=func.now())
 )
 
 
@@ -75,12 +75,14 @@ class Student(Base):
     # Relationships
     course_program: Mapped[Optional["CourseProgram"]] = relationship("CourseProgram", back_populates="students")
     streams: Mapped[List["Stream"]] = relationship("Stream", secondary=students_streams, back_populates="students")
-    messages: Mapped[List["Message"]] = relationship("Message", back_populates="student")
+    # messages: Mapped[List["Message"]] = relationship("Message", primaryjoin="Student.student_id == Message.sender_id", back_populates="student")
     assignments: Mapped[List["Assignment"]] = relationship("Assignment", back_populates="student")
     
-    # Constraints
+    # Constraints and Indexes
     __table_args__ = (
-        CheckConstraint("phone ~ '^\\+7\\d{10}$'", name='check_phone_format'),
+        CheckConstraint("phone ~ '^\\+?\\d{10,15}$'", name='check_phone_format'),
+        Index('idx_students_phone', 'phone'),
+        Index('idx_students_telegram_user_id', 'telegram_user_id'),
     )
 
 
@@ -177,6 +179,12 @@ class CourseMaterial(Base):
     
     # Relationships
     lesson: Mapped["Lesson"] = relationship("Lesson", back_populates="course_materials")
+    
+    # Indexes
+    __table_args__ = (
+        Index('idx_course_materials_lesson_id', 'lesson_id'),
+        Index('idx_course_materials_material_type', 'material_type'),
+    )
 
 
 class Message(Base):
@@ -193,8 +201,14 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now(), nullable=False)
     
     # Relationships
-    student: Mapped[Optional["Student"]] = relationship("Student", back_populates="messages")
+    # student: Mapped[Optional["Student"]] = relationship("Student", primaryjoin="Message.sender_id == Student.student_id", back_populates="messages")
     bot_responses: Mapped[List["BotResponse"]] = relationship("BotResponse", back_populates="message")
+    
+    # Indexes
+    __table_args__ = (
+        Index('idx_messages_chat_id', 'chat_id'),
+        Index('idx_messages_telegram_message_id', 'telegram_message_id'),
+    )
 
 
 class BotResponse(Base):
@@ -244,6 +258,12 @@ class Schedule(Base):
     # Relationships
     stream: Mapped["Stream"] = relationship("Stream", back_populates="schedule")
     lesson: Mapped["Lesson"] = relationship("Lesson", back_populates="schedule")
+    
+    # Indexes
+    __table_args__ = (
+        Index('idx_schedule_stream_id', 'stream_id'),
+        Index('idx_schedule_scheduled_date', 'scheduled_date'),
+    )
 
 
 class Assignment(Base):
@@ -266,6 +286,12 @@ class Assignment(Base):
     # Relationships
     student: Mapped["Student"] = relationship("Student", back_populates="assignments")
     lesson: Mapped["Lesson"] = relationship("Lesson", back_populates="assignments")
+    
+    # Indexes
+    __table_args__ = (
+        Index('idx_assignments_student_id', 'student_id'),
+        Index('idx_assignments_lesson_id', 'lesson_id'),
+    )
 
 
 class Prompt(Base):
@@ -273,13 +299,18 @@ class Prompt(Base):
     __tablename__ = "prompts"
     
     prompt_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, index=True)
-    prompt_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    prompt_type: Mapped[PromptType] = mapped_column(SQLEnum(PromptType), nullable=False)
     prompt_text: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     version: Mapped[int] = mapped_column(Integer, default=1)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now(), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
+    
+    # Indexes
+    __table_args__ = (
+        Index('idx_prompts_type_active', 'prompt_type', 'is_active'),
+    )
 
 
 class FAQResponse(Base):
