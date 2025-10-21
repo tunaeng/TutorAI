@@ -30,9 +30,3 @@ venv/
 env/
 .venv/
 
-# Alembic
-alembic/versions/*.pyc
-
-# Static files
-static/
-uploads/

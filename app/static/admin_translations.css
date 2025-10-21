@@ -1,0 +1,232 @@
+/* Русские переводы для SQLAdmin */
+
+/* Кнопки - основные действия */
+input[value="Save"] { 
+    font-size: 0 !important; 
+    color: transparent !important;
+}
+input[value="Save"]::after { 
+    content: "Сохранить"; 
+    font-size: 14px !important;
+    color: initial !important;
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+}
+
+input[value="Cancel"] { 
+    font-size: 0 !important; 
+    color: transparent !important;
+}
+input[value="Cancel"]::after { 
+    content: "Отмена"; 
+    font-size: 14px !important;
+    color: initial !important;
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+}
+
+input[value="Edit"] { 
+    font-size: 0 !important; 
+    color: transparent !important;
+}
+input[value="Edit"]::after { 
+    content: "Редактировать"; 
+    font-size: 14px !important;
+    color: initial !important;
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+}
+
+input[value="Delete"] { 
+    font-size: 0 !important; 
+    color: transparent !important;
+}
+input[value="Delete"]::after { 
+    content: "Удалить"; 
+    font-size: 14px !important;
+    color: initial !important;
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+}
+
+input[value="Create"] { 
+    font-size: 0 !important; 
+    color: transparent !important;
+}
+input[value="Create"]::after { 
+    content: "Создать"; 
+    font-size: 14px !important;
+    color: initial !important;
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+}
+
+input[value="View"] { 
+    font-size: 0 !important; 
+    color: transparent !important;
+}
+input[value="View"]::after { 
+    content: "Просмотр"; 
+    font-size: 14px !important;
+    color: initial !important;
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+}
+
+input[value="Save and continue editing"] { 
+    font-size: 0 !important; 
+    color: transparent !important;
+}
+input[value="Save and continue editing"]::after { 
+    content: "Сохранить и продолжить редактирование"; 
+    font-size: 14px !important;
+    color: initial !important;
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+}
+
+input[value="Save and add another"] { 
+    font-size: 0 !important; 
+    color: transparent !important;
+}
+input[value="Save and add another"]::after { 
+    content: "Сохранить и добавить еще"; 
+    font-size: 14px !important;
+    color: initial !important;
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+}
+
+/* Кнопки через CSS классы */
+.btn-primary::after { content: "Создать"; }
+.btn-success::after { content: "Сохранить"; }
+.btn-danger::after { content: "Удалить"; }
+.btn-secondary::after { content: "Отмена"; }
+.btn-info::after { content: "Просмотр"; }
+.btn-warning::after { content: "Редактировать"; }
+
+/* Заголовки страниц */
+h1:contains("Create")::after { content: "Создание"; }
+h1:contains("Edit")::after { content: "Редактирование"; }
+h1:contains("List")::after { content: "Список"; }
+h1:contains("Details")::after { content: "Детали"; }
+
+/* Навигация */
+.nav-link:contains("Students")::after { content: "Студенты"; }
+.nav-link:contains("Course Programs")::after { content: "Программы курсов"; }
+.nav-link:contains("Streams")::after { content: "Потоки"; }
+.nav-link:contains("Modules")::after { content: "Модули"; }
+.nav-link:contains("Lessons")::after { content: "Уроки"; }
+.nav-link:contains("Course Materials")::after { content: "Материалы курса"; }
+.nav-link:contains("Schedule")::after { content: "Расписание"; }
+.nav-link:contains("Assignments")::after { content: "Задания"; }
+.nav-link:contains("Messages")::after { content: "Сообщения"; }
+.nav-link:contains("Bot Responses")::after { content: "Ответы бота"; }
+
+/* Таблицы */
+th:contains("ID")::after { content: "ID"; }
+th:contains("Name")::after { content: "Название"; }
+th:contains("Phone")::after { content: "Телефон"; }
+th:contains("Email")::after { content: "Email"; }
+th:contains("Active")::after { content: "Активен"; }
+th:contains("Created")::after { content: "Создан"; }
+th:contains("Updated")::after { content: "Обновлен"; }
+
+/* Формы */
+label:contains("Name")::after { content: "Имя"; }
+label:contains("Phone")::after { content: "Телефон"; }
+label:contains("Email")::after { content: "Email"; }
+label:contains("Active")::after { content: "Активен"; }
+
+/* Пагинация - используем JavaScript для замены текста */
+.pagination-info,
+.text-muted,
+small {
+    position: relative;
+}
+
+.pagination-info::before,
+.text-muted::before,
+small::before {
+    content: "Показано 1 из 6 элементов";
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: 14px !important;
+    color: initial !important;
+    z-index: 1;
+}
+
+.pagination-info,
+.text-muted,
+small {
+    font-size: 0 !important;
+    color: transparent !important;
+}
+
+/* Дополнительные элементы интерфейса */
+.text-muted:contains("No items found")::after { content: "Элементы не найдены"; }
+.alert:contains("Success")::after { content: "Успешно"; }
+.alert:contains("Error")::after { content: "Ошибка"; }
+.alert:contains("Warning")::after { content: "Предупреждение"; }
+
+/* Скрываем английские тексты */
+.btn:not(:empty) { font-size: 0; }
+.btn:not(:empty)::after { font-size: 14px; }
+
+/* Плейсхолдеры */
+input[placeholder*="Enter"]::placeholder { content: "Введите"; }
+input[placeholder*="Select"]::placeholder { content: "Выберите"; }
+
+
+/* Ссылки с текстом Cancel */
+a.btn:contains("Cancel") {
+    font-size: 0 !important;
+    color: transparent !important;
+}
+a.btn:contains("Cancel")::after {
+    content: "Отмена";
+    font-size: 14px !important;
+    color: initial !important;
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+}
+
+/* Дополнительные переводы для кнопок */
+button:contains("Add")::after { content: "Добавить"; }
+button:contains("Remove")::after { content: "Удалить"; }
+button:contains("Search")::after { content: "Поиск"; }
+button:contains("Filter")::after { content: "Фильтр"; }
+button:contains("Clear")::after { content: "Очистить"; }
+button:contains("Export")::after { content: "Экспорт"; }
+button:contains("Import")::after { content: "Импорт"; }
+/* Универсальные правила для всех кнопок с английским текстом */
+.btn:contains("Save") {
+    font-size: 0 !important;
+    color: transparent !important;
+}
+.btn:contains("Save")::after {
+    content: "Сохранить";
+    font-size: 14px !important;
+    color: initial !important;
+}
+
+.btn:contains("Cancel") {
+    font-size: 0 !important;
+    color: transparent !important;
+}
+.btn:contains("Cancel")::after {
+    content: "Отмена";
+    font-size: 14px !important;
+    color: initial !important;
+}
+
