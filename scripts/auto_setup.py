@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 АВТОМАТИЧЕСКАЯ НАСТРОЙКА AI TUTOR
 Полный скрипт настройки проекта
@@ -10,6 +11,12 @@ import sys
 import os
 from pathlib import Path
 from datetime import date, datetime
+
+# Устанавливаем кодировку UTF-8 для Windows
+if sys.platform == "win32":
+    import codecs
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+    sys.stderr = codecs.getwriter("utf-8")(sys.stderr.detach())
 
 # Добавляем путь к проекту
 project_root = Path(__file__).parent.parent
@@ -26,7 +33,16 @@ from app.models.education import (
 def run_command(command, shell=True, timeout=300):
     """Выполнить команду и вернуть статус, stdout, stderr"""
     try:
-        result = subprocess.run(command, shell=shell, capture_output=True, text=True, timeout=timeout)
+        # Используем UTF-8 кодировку для корректной работы с русским текстом
+        result = subprocess.run(
+            command, 
+            shell=shell, 
+            capture_output=True, 
+            text=True, 
+            timeout=timeout,
+            encoding='utf-8',
+            errors='replace'  # Заменяем проблемные символы на ?
+        )
         return result.returncode == 0, result.stdout, result.stderr
     except subprocess.TimeoutExpired:
         print(f"⏰ Команда превысила таймаут {timeout} секунд: {command}")
@@ -36,19 +52,19 @@ def run_command(command, shell=True, timeout=300):
 
 async def create_tables():
     """Создать таблицы"""
-    print("🗄️ Создаем таблицы...")
+    print("Создаем таблицы...")
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        print('✅ Таблицы созданы!')
+        print('Таблицы созданы!')
         return True
     except Exception as e:
-        print(f"❌ Ошибка создания таблиц: {e}")
+        print(f"ОШИБКА создания таблиц: {e}")
         return False
 
 async def seed_data():
     """Загрузить тестовые данные"""
-    print("🌱 Загружаем тестовые данные...")
+    print("Загружаем тестовые данные...")
     try:
         async with async_session() as session:
             # Программы курсов
@@ -230,8 +246,8 @@ async def seed_data():
                 session.add(bot_response)
             
             await session.commit()
-            print("✅ Тестовые данные загружены успешно!")
-            print(f"📊 Создано:")
+            print("Тестовые данные загружены успешно!")
+            print(f"Создано:")
             print(f"  - Программ курсов: {len(programs)}")
             print(f"  - Модулей: {len(modules)}")
             print(f"  - Студентов: {len(students)}")
@@ -244,51 +260,51 @@ async def seed_data():
             print(f"  - Ответов бота: {len(bot_responses_data)}")
             return True
     except Exception as e:
-        print(f"❌ Ошибка загрузки данных: {e}")
+        print(f"ОШИБКА загрузки данных: {e}")
         import traceback
         traceback.print_exc()
         return False
 
 def main():
-    print("🚀 АВТОМАТИЧЕСКАЯ НАСТРОЙКА AI TUTOR")
+    print("АВТОМАТИЧЕСКАЯ НАСТРОЙКА AI TUTOR")
     print("=" * 50)
     
     # 1. Остановить все и очистить
-    print("🧹 Очищаем старые контейнеры...")
+    print("Очищаем старые контейнеры...")
     run_command("docker-compose down --volumes")
     run_command("docker system prune -f")
     
     # 2. Запустить все через docker-compose
-    print("🐳 Запускаем все контейнеры...")
+    print("Запускаем все контейнеры...")
     success, stdout, error = run_command("docker-compose up -d", timeout=600)  # 10 минут на запуск
     if not success:
-        print(f"❌ Ошибка запуска контейнеров: {error}")
+        print(f"ОШИБКА запуска контейнеров: {error}")
         return False
     
     # 3. Ждать запуска
-    print("⏳ Ждем запуска контейнеров...")
+    print("Ждем запуска контейнеров...")
     time.sleep(30)
-    print("✅ Контейнеры запущены!")
+    print("Контейнеры запущены!")
     
     # 4. Создать таблицы через Docker
-    print("🗄️ Создаем таблицы через Docker...")
+    print("Создаем таблицы через Docker...")
     success, output, error = run_command("docker exec ai_tutor_app python scripts/create_tables.py", timeout=60)
     if not success:
-        print(f"❌ Ошибка создания таблиц: {error}")
+        print(f"ОШИБКА создания таблиц: {error}")
         return False
-    print("✅ Таблицы созданы!")
+    print("Таблицы созданы!")
     
     # 5. Загрузить тестовые данные через Docker
-    print("🌱 Загружаем тестовые данные через Docker...")
+    print("Загружаем тестовые данные через Docker...")
     success, output, error = run_command("docker exec ai_tutor_app python scripts/seed_data.py", timeout=120)
     if not success:
-        print(f"❌ Ошибка загрузки данных: {error}")
+        print(f"ОШИБКА загрузки данных: {error}")
         return False
-    print("✅ Данные загружены!")
+    print("Данные загружены!")
     
     print("\n" + "=" * 50)
-    print("🎉 НАСТРОЙКА ЗАВЕРШЕНА!")
-    print("📋 Доступные URL:")
+    print("НАСТРОЙКА ЗАВЕРШЕНА!")
+    print("Доступные URL:")
     print("  - Админ панель: http://localhost:8000/admin")
     print("  - API документация: http://localhost:8000/docs")
     print("  - Главная страница: http://localhost:8000 (редирект на админку)")
@@ -299,8 +315,8 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n❌ Прервано пользователем")
+        print("\nПРЕРВАНО пользователем")
     except Exception as e:
-        print(f"\n❌ Критическая ошибка: {e}")
+        print(f"\nКРИТИЧЕСКАЯ ОШИБКА: {e}")
         import traceback
         traceback.print_exc()
