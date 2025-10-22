@@ -15,6 +15,13 @@ class StudentAdmin(ModelView, model=Student):
     can_bulk_delete = False
     can_bulk_export = False
     
+    # Кастомные тексты для кнопок
+    create_text = "Добавить студента"
+    edit_text = "Редактировать студента"
+    delete_text = "Удалить студента"
+    save_text = "Сохранить"
+    cancel_text = "Отмена"
+    
     # Иконка и русские подписи
     icon = "fa-solid fa-user"
     column_labels = {
@@ -44,6 +51,13 @@ class CourseProgramAdmin(ModelView, model=CourseProgram):
     can_bulk_delete = False
     can_bulk_export = False
     
+    # Кастомные тексты для кнопок
+    create_text = "Добавить программу"
+    edit_text = "Редактировать программу"
+    delete_text = "Удалить программу"
+    save_text = "Сохранить"
+    cancel_text = "Отмена"
+    
     icon = "fa-solid fa-graduation-cap"
     column_labels = {
         CourseProgram.program_id: "ID",
@@ -70,6 +84,13 @@ class StreamAdmin(ModelView, model=Stream):
     can_delete = False
     can_bulk_delete = False
     can_bulk_export = False
+    
+    # Кастомные тексты для кнопок
+    create_text = "Добавить поток"
+    edit_text = "Редактировать поток"
+    delete_text = "Удалить поток"
+    save_text = "Сохранить"
+    cancel_text = "Отмена"
     
     icon = "fa-solid fa-users"
     column_labels = {
@@ -99,6 +120,13 @@ class ModuleAdmin(ModelView, model=Module):
     can_delete = False
     can_bulk_delete = False
     can_bulk_export = False
+    
+    # Кастомные тексты для кнопок
+    create_text = "Добавить модуль"
+    edit_text = "Редактировать модуль"
+    delete_text = "Удалить модуль"
+    save_text = "Сохранить"
+    cancel_text = "Отмена"
     
     icon = "fa-solid fa-book"
     column_labels = {
@@ -137,6 +165,13 @@ class LessonAdmin(ModelView, model=Lesson):
     can_bulk_delete = False
     can_bulk_export = False
     
+    # Кастомные тексты для кнопок
+    create_text = "Добавить урок"
+    edit_text = "Редактировать урок"
+    delete_text = "Удалить урок"
+    save_text = "Сохранить"
+    cancel_text = "Отмена"
+    
     icon = "fa-solid fa-chalkboard-teacher"
     column_labels = {
         Lesson.lesson_id: "ID",
@@ -165,6 +200,13 @@ class CourseMaterialAdmin(ModelView, model=CourseMaterial):
     can_delete = False
     can_bulk_delete = False
     can_bulk_export = False
+    
+    # Кастомные тексты для кнопок
+    create_text = "Добавить материал"
+    edit_text = "Редактировать материал"
+    delete_text = "Удалить материал"
+    save_text = "Сохранить"
+    cancel_text = "Отмена"
     
     icon = "fa-solid fa-file-alt"
     column_labels = {
@@ -198,6 +240,13 @@ class ScheduleAdmin(ModelView, model=Schedule):
     can_bulk_delete = False
     can_bulk_export = False
     
+    # Кастомные тексты для кнопок
+    create_text = "Добавить расписание"
+    edit_text = "Редактировать расписание"
+    delete_text = "Удалить расписание"
+    save_text = "Сохранить"
+    cancel_text = "Отмена"
+    
     icon = "fa-solid fa-calendar"
     column_labels = {
         Schedule.schedule_id: "ID",
@@ -222,6 +271,13 @@ class AssignmentAdmin(ModelView, model=Assignment):
     can_delete = False
     can_bulk_delete = False
     can_bulk_export = False
+    
+    # Кастомные тексты для кнопок
+    create_text = "Добавить задание"
+    edit_text = "Редактировать задание"
+    delete_text = "Удалить задание"
+    save_text = "Сохранить"
+    cancel_text = "Отмена"
     
     icon = "fa-solid fa-tasks"
     column_labels = {
@@ -326,13 +382,112 @@ def setup_admin(app):
                 js_script = '''
                 <script>
                 document.addEventListener('DOMContentLoaded', function() {
-                    // Заменяем текст пагинации
-                    const elements = document.querySelectorAll('*');
-                    elements.forEach(el => {
-                        if (el.textContent && el.textContent.includes('Showing')) {
-                            el.textContent = el.textContent.replace(/Showing \\d+ to \\d+ of \\d+ items/g, 'Показано 1 из 6 элементов');
-                        }
-                    });
+                    // Функция для замены текста
+                    function replaceText() {
+                        // Заменяем текст кнопок
+                        const buttons = document.querySelectorAll('a.btn, button.btn');
+                        buttons.forEach(btn => {
+                            if (btn.textContent.includes('New')) {
+                                btn.textContent = btn.textContent.replace('New', 'Добавить');
+                            }
+                            if (btn.textContent.includes('Edit')) {
+                                btn.textContent = btn.textContent.replace('Edit', 'Редактировать');
+                            }
+                            if (btn.textContent.includes('Delete')) {
+                                btn.textContent = btn.textContent.replace('Delete', 'Удалить');
+                            }
+                            if (btn.textContent.includes('Save')) {
+                                btn.textContent = btn.textContent.replace('Save', 'Сохранить');
+                            }
+                            if (btn.textContent.includes('Cancel')) {
+                                btn.textContent = btn.textContent.replace('Cancel', 'Отмена');
+                            }
+                        });
+                        
+                        // Заменяем кнопки форм редактирования
+                        const submitButtons = document.querySelectorAll('input[type="submit"]');
+                        submitButtons.forEach(btn => {
+                            if (btn.value === 'Save') {
+                                btn.value = 'Сохранить';
+                            }
+                            if (btn.value === 'Save and continue editing') {
+                                btn.value = 'Сохранить и продолжить редактирование';
+                            }
+                            if (btn.value === 'Save and add another') {
+                                btn.value = 'Сохранить и добавить еще';
+                            }
+                        });
+                        
+                        // Заменяем ссылки Cancel
+                        const cancelLinks = document.querySelectorAll('a.btn[href*="/list"]');
+                        cancelLinks.forEach(link => {
+                            if (link.textContent.includes('Cancel')) {
+                                link.textContent = link.textContent.replace('Cancel', 'Отмена');
+                            }
+                        });
+                        
+                        // Заменяем текст пагинации - более агрессивно
+                        const allElements = document.querySelectorAll('*');
+                        allElements.forEach(el => {
+                            if (el.textContent && el.textContent.includes('Showing')) {
+                                el.textContent = el.textContent.replace(/Showing \\d+ to \\d+ of \\d+ items/g, 'Показано элементов');
+                            }
+                            if (el.textContent && el.textContent.includes('prev')) {
+                                el.textContent = el.textContent.replace('prev', 'Предыдущая');
+                            }
+                            if (el.textContent && el.textContent.includes('next')) {
+                                el.textContent = el.textContent.replace('next', 'Следующая');
+                            }
+                            if (el.textContent && el.textContent.includes('Show')) {
+                                el.textContent = el.textContent.replace('Show', 'Показать');
+                            }
+                            if (el.textContent && el.textContent.includes('/ Page')) {
+                                el.textContent = el.textContent.replace('/ Page', '/ Страница');
+                            }
+                        });
+                        
+                        // Специально для пагинации
+                        const paginationTexts = document.querySelectorAll('p.text-muted');
+                        paginationTexts.forEach(p => {
+                            if (p.textContent.includes('Showing')) {
+                                p.innerHTML = p.innerHTML.replace(/Showing <span>\\d+<\\/span> to <span>\\d+<\\/span> of <span>\\d+<\\/span> items/g, 'Показано элементов');
+                            }
+                        });
+                        
+                        // Кнопки пагинации
+                        const paginationLinks = document.querySelectorAll('.pagination a');
+                        paginationLinks.forEach(link => {
+                            if (link.textContent.includes('prev')) {
+                                link.innerHTML = link.innerHTML.replace('prev', 'Предыдущая');
+                            }
+                            if (link.textContent.includes('next')) {
+                                link.innerHTML = link.innerHTML.replace('next', 'Следующая');
+                            }
+                        });
+                        
+                        // Dropdown элементы
+                        const dropdownItems = document.querySelectorAll('.dropdown-item');
+                        dropdownItems.forEach(item => {
+                            if (item.textContent.includes('/ Page')) {
+                                item.textContent = item.textContent.replace('/ Page', '/ Страница');
+                            }
+                        });
+                        
+                        const dropdownToggle = document.querySelectorAll('.dropdown-toggle');
+                        dropdownToggle.forEach(toggle => {
+                            if (toggle.textContent.includes('/ Page')) {
+                                toggle.textContent = toggle.textContent.replace('/ Page', '/ Страница');
+                            }
+                        });
+                    }
+                    
+                    // Запускаем сразу
+                    replaceText();
+                    
+                    // Запускаем через небольшую задержку (на случай если контент загружается асинхронно)
+                    setTimeout(replaceText, 100);
+                    setTimeout(replaceText, 500);
+                    setTimeout(replaceText, 1000);
                 });
                 </script>
                 '''
