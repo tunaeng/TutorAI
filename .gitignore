@@ -29,4 +29,6 @@ Thumbs.db
 venv/
 env/
 .venv/
-
+TutorAI/lib/
+TutorAI/pyvenv.cfg
+TutorAI/bin/
