@@ -1,4 +1,7 @@
 from sqladmin import Admin, ModelView
+from sqladmin.authentication import AuthenticationBackend
+from app.core.config import settings
+from starlette.responses import HTMLResponse
 from app.core.database import engine
 from app.models.education import (
     Student, CourseProgram, Stream, Module, Lesson,
@@ -362,8 +365,34 @@ class BotResponseAdmin(ModelView, model=BotResponse):
         "attachment_url": {"placeholder": "Ссылка на вложение"}
     }
 
+class AdminAuth(AuthenticationBackend):
+    async def login(self, request) -> bool:  # type: ignore[override]
+        form = await request.form()
+        username = form.get("username")
+        password = form.get("password")
+        if (
+            isinstance(username, str)
+            and isinstance(password, str)
+            and username == settings.ADMIN_USERNAME
+            and password == settings.ADMIN_PASSWORD
+        ):
+            request.session.update({"authenticated": True})
+            return True
+        return False
+
+    async def logout(self, request) -> bool:  # type: ignore[override]
+        request.session.clear()
+        return True
+
+    async def authenticate(self, request) -> bool:  # type: ignore[override]
+        return bool(request.session.get("authenticated"))
+
+    async def is_authenticated(self, request) -> bool:  # compatibility with older/newer SQLAdmin
+        return bool(request.session.get("authenticated"))
+
 def setup_admin(app):
-    admin = Admin(app, engine, title="AI Tutor Admin")
+    auth_backend = AdminAuth(secret_key=settings.SECRET_KEY)
+    admin = Admin(app, engine, title="AI Tutor Admin", authentication_backend=auth_backend)
     
     # Добавляем кастомный CSS для переводов
     @app.get("/static/admin_translations.css")
@@ -375,13 +404,23 @@ def setup_admin(app):
     @app.middleware("http")
     async def add_translations_css(request, call_next):
         response = await call_next(request)
-        if request.url.path.startswith("/admin") and "text/html" in response.headers.get("content-type", ""):
-            if hasattr(response, 'body'):
-                body = response.body.decode() if isinstance(response.body, bytes) else response.body
-                css_link = '<link rel="stylesheet" href="/static/admin_translations.css">'
-                js_script = '''
-                <script>
-                document.addEventListener('DOMContentLoaded', function() {
+        if not settings.ADMIN_I18N_ENABLED:
+            return response
+        try:
+            path = request.url.path
+            if (
+                path.startswith("/admin")
+                and (not path.startswith("/admin/login"))
+                and "text/html" in response.headers.get("content-type", "")
+                and getattr(response, "status_code", 200) == 200
+            ):
+                if isinstance(response, HTMLResponse) and hasattr(response, 'body') and response.body:
+                    body = response.body.decode() if isinstance(response.body, bytes) else response.body
+                    if isinstance(body, str) and ("</head>" in body) and ("</body>" in body):
+                        css_link = '<link rel="stylesheet" href="/static/admin_translations.css">'
+                        js_script = '''
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
                     // Функция для замены текста
                     function replaceText() {
                         // Заменяем текст кнопок
@@ -491,9 +530,14 @@ def setup_admin(app):
                 });
                 </script>
                 '''
-                body = body.replace("</head>", css_link + "</head>")
-                body = body.replace("</body>", js_script + "</body>")
-                response.body = body.encode() if isinstance(body, str) else body
+                        body = body.replace("</head>", css_link + "</head>")
+                        body = body.replace("</body>", js_script + "</body>")
+                        new_body = body.encode()
+                        response.body = new_body
+                        response.headers["content-length"] = str(len(new_body))
+        except Exception:
+            # В случае любой ошибки не вмешиваемся в ответ
+            return response
         return response
     
     # Регистрация моделей
