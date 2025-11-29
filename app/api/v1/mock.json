@@ -1,0 +1,174 @@
+{
+  "students": [
+    {
+      "student_id": "st_101",
+      "name": "Alice Johnson",
+      "group_id": "group_2025_B",
+      "assignments": [
+        {
+          "id": "as_001",
+          "grade": 88,
+          "submitted_at": "2025-11-03T14:32:00Z"
+        },
+        {
+          "id": "as_002",
+          "grade": 95,
+          "submitted_at": "2025-11-07T10:18:00Z"
+        }
+      ]
+    },
+    {
+      "student_id": "st_102",
+      "name": "Michael Smith",
+      "group_id": "group_2025_B",
+      "assignments": [
+        {
+          "id": "as_010",
+          "grade": 76,
+          "submitted_at": "2025-11-04T09:40:00Z"
+        },
+        {
+          "id": "as_011",
+          "grade": 82,
+          "submitted_at": "2025-11-06T15:10:00Z"
+        },
+        {
+          "id": "as_012",
+          "grade": 79,
+          "submitted_at": "2025-11-08T11:55:00Z"
+        }
+      ]
+    },
+    {
+      "student_id": "st_103",
+      "name": "Sofia Martinez",
+      "group_id": "group_2025_B",
+      "assignments": [
+        {
+          "id": "as_020",
+          "grade": 90,
+          "submitted_at": "2025-11-02T13:22:00Z"
+        },
+        {
+          "id": "as_021",
+          "grade": 93,
+          "submitted_at": "2025-11-05T08:40:00Z"
+        }
+      ]
+    },
+    {
+      "student_id": "st_104",
+      "name": "David Lee",
+      "group_id": "group_2025_B",
+      "assignments": [
+        {
+          "id": "as_030",
+          "grade": 100,
+          "submitted_at": "2025-11-01T16:05:00Z"
+        },
+        {
+          "id": "as_031",
+          "grade": 97,
+          "submitted_at": "2025-11-06T19:30:00Z"
+        }
+      ]
+    },
+    {
+      "student_id": "st_105",
+      "name": "Emma Brown",
+      "group_id": "group_2025_B",
+      "assignments": [
+        {
+          "id": "as_040",
+          "grade": 65,
+          "submitted_at": "2025-11-03T12:00:00Z"
+        }
+      ]
+    },
+    {
+      "student_id": "st_001",
+      "name": "Alice Johnson",
+      "group_id": "group_2025_B",
+      "assignments": [
+        {
+          "id": "as_001",
+          "grade": 88,
+          "submitted_at": "2025-11-03T14:32:00Z"
+        },
+        {
+          "id": "as_002",
+          "grade": 95,
+          "submitted_at": "2025-11-07T10:18:00Z"
+        }
+      ]
+    },
+    {
+      "student_id": "st_002",
+      "name": "Michael Smith",
+      "group_id": "group_2025_B",
+      "assignments": [
+        {
+          "id": "as_010",
+          "grade": 76,
+          "submitted_at": "2025-11-04T09:40:00Z"
+        },
+        {
+          "id": "as_011",
+          "grade": 82,
+          "submitted_at": "2025-11-06T15:10:00Z"
+        },
+        {
+          "id": "as_012",
+          "grade": 79,
+          "submitted_at": "2025-11-08T11:55:00Z"
+        }
+      ]
+    },
+    {
+      "student_id": "st_003",
+      "name": "Sofia Martinez",
+      "group_id": "group_2025_B",
+      "assignments": [
+        {
+          "id": "as_020",
+          "grade": 90,
+          "submitted_at": "2025-11-02T13:22:00Z"
+        },
+        {
+          "id": "as_021",
+          "grade": 93,
+          "submitted_at": "2025-11-05T08:40:00Z"
+        }
+      ]
+    },
+    {
+      "student_id": "st_004",
+      "name": "David Lee",
+      "group_id": "group_2025_B",
+      "assignments": [
+        {
+          "id": "as_030",
+          "grade": 100,
+          "submitted_at": "2025-11-01T16:05:00Z"
+        },
+        {
+          "id": "as_031",
+          "grade": 97,
+          "submitted_at": "2025-11-06T19:30:00Z"
+        }
+      ]
+    },
+    {
+      "student_id": "st_005",
+      "name": "Emma Brown",
+      "group_id": "group_2025_B",
+      "assignments": [
+        {
+          "id": "as_040",
+          "grade": 65,
+          "submitted_at": "2025-11-03T12:00:00Z"
+        }
+      ]
+    }
+  ]
+}

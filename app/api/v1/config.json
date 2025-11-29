@@ -1,0 +1,30 @@
+{
+  "programs": {
+    "AI-BOOTCAMP": {
+      "default_frequency": "weekly",
+      "groups": {
+        "AI-101": {
+          "frequency": "biweekly",
+          "start_date": "2025-10-28"
+        },
+        "AI-102": {
+          "frequency": "weekly",
+          "start_date": "2025-10-21"
+        }
+      }
+    },
+    "ML-BASICS": {
+      "default_frequency": "weekly",
+      "groups": {
+        "ML-101": {
+          "frequency": "biweekly",
+          "start_date": "2025-10-17"
+        },
+        "ML-102": {
+          "frequency": "weekly",
+          "start_date": "2025-11-01"
+        }
+      }
+    }
+  }
+}
