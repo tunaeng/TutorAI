@@ -2,11 +2,17 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
 from app.core.config import settings
 
-# Async engine
+# Async engine with Supabase pooler compatibility
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,
-    future=True
+    future=True,
+    connect_args={
+        "server_settings": {
+            "application_name": "TutorAI Admin",
+        },
+        "statement_cache_size": 0,  # Disable prepared statements for Supabase pooler
+    }
 )
 
 # Session factory
