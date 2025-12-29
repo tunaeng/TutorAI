@@ -20,10 +20,22 @@ app = FastAPI(
 async def log_exceptions(request: Request, call_next):
     try:
         response = await call_next(request)
+        # Логируем 500 ошибки даже если они не выбросили исключение
+        if response.status_code == 500:
+            logger.error(f"500 error in {request.url.path} - response status is 500")
         return response
     except Exception as e:
-        logger.error(f"Exception in {request.url.path}: {e}")
-        logger.error(traceback.format_exc())
+        error_msg = f"Exception in {request.url.path}: {e}\n{traceback.format_exc()}"
+        logger.error(error_msg)
+        print(f"\n{'='*80}\nERROR:\n{error_msg}\n{'='*80}\n")
+        # В режиме DEBUG отдаем текст ошибки в ответ, чтобы проще было отладить
+        from fastapi.responses import PlainTextResponse
+        if settings.DEBUG:
+            return PlainTextResponse(
+                f"Error in {request.url.path}:\n{e}\n\n{traceback.format_exc()}",
+                status_code=500,
+                media_type="text/plain; charset=utf-8",
+            )
         raise
 
 # Сессии для аутентификации админ-панели

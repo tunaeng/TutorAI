@@ -139,6 +139,12 @@ TutorAI/
 uvicorn app.main:app --reload --log-level debug
 ```
 
+### Остановка uvicorn (Windows)
+
+```powershell
+Get-Process | Where-Object {$_.ProcessName -eq "python" -and $_.CommandLine -like "*uvicorn*"} | Stop-Process -Force
+```
+
 ### Работа с базой данных
 
 Приложение автоматически подключается к PostgreSQL через `DATABASE_URL` из `.env`.

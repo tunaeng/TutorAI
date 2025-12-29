@@ -1,10 +1,40 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import declarative_base
 from app.core.config import settings
+
+
+def _ensure_asyncpg_url(url: str) -> str:
+    """
+    Гарантирует, что для PostgreSQL используется асинхронный драйвер asyncpg.
+    Работает с форматами:
+    - postgresql://...
+    - postgres://...
+    - postgresql+psycopg2://...
+    - и уже корректным postgresql+asyncpg://...
+    """
+    if not url:
+        raise ValueError("DATABASE_URL не установлен")
+
+    # Уже async-драйвер
+    if "+asyncpg" in url:
+        return url
+
+    # psycopg2 -> asyncpg
+    if "+psycopg2" in url:
+        return url.replace("+psycopg2", "+asyncpg")
+
+    # Простые postgres/postgresql -> добавляем +asyncpg
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+asyncpg://", 1)
+
+    return url
+
 
 # Async engine with Supabase pooler compatibility
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    _ensure_asyncpg_url(settings.DATABASE_URL),
     echo=settings.DEBUG,
     future=True,
     connect_args={
@@ -12,11 +42,11 @@ engine = create_async_engine(
             "application_name": "TutorAI Admin",
         },
         "statement_cache_size": 0,  # Disable prepared statements for Supabase pooler
-    }
+    },
 )
 
-# Session factory
-async_session = sessionmaker(
+# Session factory для async
+async_session = async_sessionmaker(
     engine,
     class_=AsyncSession,
     expire_on_commit=False
