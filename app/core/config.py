@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     # Admin auth
     ADMIN_USERNAME: str = os.getenv("ADMIN_USERNAME", "admin")
     ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "admin")
+    ADMIN_PASSWORD_HASH: str = os.getenv("ADMIN_PASSWORD_HASH", "")
 
     # Secret key for sessions
     SECRET_KEY: str = os.getenv("SECRET_KEY", "")

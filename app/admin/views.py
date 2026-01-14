@@ -1,3 +1,4 @@
+import hashlib
 from sqladmin import Admin, ModelView
 from sqladmin.authentication import AuthenticationBackend
 from app.core.config import settings
@@ -218,14 +219,28 @@ class AdminAuth(AuthenticationBackend):
         form = await request.form()
         username = form.get("username")
         password = form.get("password")
-        if (
-            isinstance(username, str)
-            and isinstance(password, str)
-            and username == settings.ADMIN_USERNAME
-            and password == settings.ADMIN_PASSWORD
-        ):
+
+        # Базовая валидация типов
+        if not (isinstance(username, str) and isinstance(password, str)):
+            return False
+
+        # Сначала проверяем логин
+        if username != settings.ADMIN_USERNAME:
+            return False
+
+        # Если в настройках задан хэш пароля — используем только его
+        if settings.ADMIN_PASSWORD_HASH:
+            password_hash = hashlib.sha256(password.encode("utf-8")).hexdigest()
+            if password_hash == settings.ADMIN_PASSWORD_HASH:
+                request.session.update({"authenticated": True})
+                return True
+            return False
+
+        # Fallback: если хэш не задан, используем старый вариант с открытым паролем
+        if password == settings.ADMIN_PASSWORD:
             request.session.update({"authenticated": True})
             return True
+
         return False
 
     async def logout(self, request) -> bool:
