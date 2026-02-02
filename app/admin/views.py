@@ -132,7 +132,7 @@ class StudentModuleProgressAdmin(ModelView, model=StudentModuleProgress):
 class MessageAdmin(ModelView, model=Message):
     name = "Сообщение"
     name_plural = "Сообщения"
-    column_list = [Message.message_id, Message.sender_type, Message.text_content, Message.created_at]
+    column_list = [Message.message_id, Message.sender_type, Message.role, Message.telegram_user_id, Message.text_content, Message.created_at]
     can_create = False
     can_edit = False
     can_export = False
@@ -141,6 +141,8 @@ class MessageAdmin(ModelView, model=Message):
     column_labels = {
         Message.message_id: "ID",
         Message.sender_type: "Тип отправителя",
+        Message.role: "Роль",
+        Message.telegram_user_id: "Telegram User ID",
         Message.text_content: "Текст",
         Message.message_type: "Тип сообщения",
         Message.processing_ms: "Время обработки (мс)",

@@ -175,6 +175,8 @@ class Message(Base):
     message_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     student_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('students.student_id', ondelete='CASCADE'), nullable=False)
     sender_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    role: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    telegram_user_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
     text_content: Mapped[str] = mapped_column(Text, nullable=False)
     message_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     processing_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
