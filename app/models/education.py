@@ -27,6 +27,9 @@ class Program(Base):
     students: Mapped[List["Student"]] = relationship("Student", back_populates="program")
     modules: Mapped[List["CourseModule"]] = relationship("CourseModule", back_populates="program")
     materials: Mapped[List["CourseMaterial"]] = relationship("CourseMaterial", back_populates="program")
+    
+    def __str__(self):
+        return self.name
 
 
 # 2. STUDENTS
@@ -54,12 +57,16 @@ class Student(Base):
     rate_limits: Mapped[List["RateLimit"]] = relationship("RateLimit", back_populates="student")
     schedule_items: Mapped[List["ScheduleItem"]] = relationship("ScheduleItem", back_populates="student")
     test_results: Mapped[List["TestResult"]] = relationship("TestResult", back_populates="student")
+    feedbacks: Mapped[List["Feedback"]] = relationship("Feedback", back_populates="student")
     
     __table_args__ = (
         Index('idx_students_telegram_user_id', 'telegram_user_id'),
         Index('idx_students_phone', 'phone'),
         Index('idx_students_program_id', 'program_id'),
     )
+    
+    def __str__(self):
+        return f"{self.last_name} {self.first_name}"
 
 
 # 3. COURSE MODULES
@@ -87,6 +94,9 @@ class CourseModule(Base):
     __table_args__ = (
         Index('idx_modules_program_id', 'program_id'),
     )
+    
+    def __str__(self):
+        return self.name
 
 
 # 4. TOPICS
@@ -112,6 +122,9 @@ class Topic(Base):
     __table_args__ = (
         Index('idx_topics_module_id', 'module_id'),
     )
+    
+    def __str__(self):
+        return self.name
 
 
 # 5. COURSE MATERIALS
@@ -139,6 +152,9 @@ class CourseMaterial(Base):
         Index('idx_course_materials_program_id', 'program_id'),
         Index('idx_course_materials_topic_id', 'topic_id'),
     )
+    
+    def __str__(self):
+        return self.title
 
 
 # 6. STUDENT MODULE PROGRESS
@@ -166,6 +182,9 @@ class StudentModuleProgress(Base):
         Index('idx_student_progress_student_id', 'student_id'),
         Index('idx_student_progress_module_id', 'module_id'),
     )
+    
+    def __str__(self):
+        return f"Progress: Student {self.student_id} Module {self.module_id}"
 
 
 # 7. MESSAGES
@@ -189,6 +208,9 @@ class Message(Base):
         Index('idx_messages_student_id', 'student_id'),
         Index('idx_messages_created_at', 'created_at'),
     )
+    
+    def __str__(self):
+        return f"{self.sender_type}: {self.text_content[:30]}..." if len(self.text_content) > 30 else f"{self.sender_type}: {self.text_content}"
 
 
 # 8. RATE LIMITS
@@ -209,6 +231,9 @@ class RateLimit(Base):
         UniqueConstraint('student_id', 'limit_date'),
         Index('idx_rate_limits_student_id_date', 'student_id', 'limit_date'),
     )
+    
+    def __str__(self):
+        return f"Rate Limit {self.limit_date} (Student {self.student_id})"
 
 
 # 9. SCHEDULE ITEMS
@@ -230,6 +255,9 @@ class ScheduleItem(Base):
         Index('idx_schedule_items_student_id', 'student_id'),
         Index('idx_schedule_items_event_date', 'event_date'),
     )
+    
+    def __str__(self):
+        return f"{self.event_name} ({self.event_date})"
 
 
 # 10. ATTESTATION TESTS
@@ -253,6 +281,9 @@ class AttestationTest(Base):
     __table_args__ = (
         Index('idx_attestation_tests_module_id', 'module_id'),
     )
+    
+    def __str__(self):
+        return self.title
 
 
 # 11. TEST RESULTS
@@ -278,3 +309,29 @@ class TestResult(Base):
         Index('idx_test_results_student_id', 'student_id'),
         Index('idx_test_results_test_id', 'test_id'),
     )
+
+    def __str__(self):
+        return f"Test Result {self.result_id} (Score: {self.score})"
+
+
+# 12. FEEDBACK
+class Feedback(Base):
+    __tablename__ = "feedback"
+    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    student_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('students.student_id', ondelete='CASCADE'), nullable=True)
+    telegram_user_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    rating: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    comment: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    message_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    
+    # Relationships
+    student: Mapped[Optional["Student"]] = relationship("Student", back_populates="feedbacks")
+    
+    __table_args__ = (
+        Index('idx_feedback_student_id', 'student_id'),
+    )
+    
+    def __str__(self):
+        return f"Feedback {self.id} (Rating: {self.rating})"

@@ -7,17 +7,18 @@ from app.core.database import engine
 from app.models.education import (
     Student, Program, CourseModule, Topic, CourseMaterial,
     StudentModuleProgress, Message, RateLimit, ScheduleItem,
-    AttestationTest, TestResult
+    AttestationTest, TestResult, Feedback
 )
 
 
 class StudentAdmin(ModelView, model=Student):
     name = "Студент"
     name_plural = "Студенты"
+    icon = "fa-solid fa-user"
+    can_export = False
+    
     column_list = [Student.student_id, Student.last_name, Student.first_name, Student.phone, Student.status]
     column_details_list = [Student.student_id, Student.last_name, Student.first_name, Student.patronymic, Student.phone, Student.telegram_user_id, Student.status, Student.created_at]
-    can_export = False
-    icon = "fa-solid fa-user"
     
     column_labels = {
         Student.student_id: "ID",
@@ -37,9 +38,10 @@ class StudentAdmin(ModelView, model=Student):
 class ProgramAdmin(ModelView, model=Program):
     name = "Программа"
     name_plural = "Программы"
-    column_list = [Program.program_id, Program.name, Program.total_hours]
-    can_export = False
     icon = "fa-solid fa-graduation-cap"
+    can_export = False
+    
+    column_list = [Program.program_id, Program.name, Program.total_hours]
     
     column_labels = {
         Program.program_id: "ID",
@@ -53,9 +55,10 @@ class ProgramAdmin(ModelView, model=Program):
 class CourseModuleAdmin(ModelView, model=CourseModule):
     name = "Модуль"
     name_plural = "Модули"
-    column_list = [CourseModule.module_id, CourseModule.name, CourseModule.order_index, CourseModule.total_hours]
-    can_export = False
     icon = "fa-solid fa-book"
+    can_export = False
+    
+    column_list = [CourseModule.module_id, CourseModule.name, CourseModule.order_index, CourseModule.total_hours]
     
     column_labels = {
         CourseModule.module_id: "ID",
@@ -72,9 +75,10 @@ class CourseModuleAdmin(ModelView, model=CourseModule):
 class TopicAdmin(ModelView, model=Topic):
     name = "Тема"
     name_plural = "Темы"
-    column_list = [Topic.topic_id, Topic.name, Topic.order_index]
-    can_export = False
     icon = "fa-solid fa-chalkboard-teacher"
+    can_export = False
+    
+    column_list = [Topic.topic_id, Topic.name, Topic.order_index]
     
     column_labels = {
         Topic.topic_id: "ID",
@@ -92,9 +96,10 @@ class TopicAdmin(ModelView, model=Topic):
 class CourseMaterialAdmin(ModelView, model=CourseMaterial):
     name = "Материал"
     name_plural = "Материалы"
-    column_list = [CourseMaterial.material_id, CourseMaterial.title, CourseMaterial.material_type, CourseMaterial.is_public]
-    can_export = False
     icon = "fa-solid fa-file-alt"
+    can_export = False
+    
+    column_list = [CourseMaterial.material_id, CourseMaterial.title, CourseMaterial.material_type, CourseMaterial.is_public]
     
     column_labels = {
         CourseMaterial.material_id: "ID",
@@ -114,9 +119,10 @@ class CourseMaterialAdmin(ModelView, model=CourseMaterial):
 class StudentModuleProgressAdmin(ModelView, model=StudentModuleProgress):
     name = "Прогресс"
     name_plural = "Прогресс студентов"
-    column_list = [StudentModuleProgress.progress_id, StudentModuleProgress.student_id, StudentModuleProgress.module_id, StudentModuleProgress.status, StudentModuleProgress.progress_percentage]
-    can_export = False
     icon = "fa-solid fa-chart-line"
+    can_export = False
+    
+    column_list = [StudentModuleProgress.progress_id, StudentModuleProgress.student_id, StudentModuleProgress.module_id, StudentModuleProgress.status, StudentModuleProgress.progress_percentage]
     
     column_labels = {
         StudentModuleProgress.progress_id: "ID",
@@ -132,11 +138,12 @@ class StudentModuleProgressAdmin(ModelView, model=StudentModuleProgress):
 class MessageAdmin(ModelView, model=Message):
     name = "Сообщение"
     name_plural = "Сообщения"
-    column_list = [Message.message_id, Message.sender_type, Message.role, Message.telegram_user_id, Message.text_content, Message.created_at]
+    icon = "fa-solid fa-comment"
     can_create = False
     can_edit = False
     can_export = False
-    icon = "fa-solid fa-comment"
+    
+    column_list = [Message.message_id, Message.sender_type, Message.role, Message.telegram_user_id, Message.text_content, Message.created_at]
     
     column_labels = {
         Message.message_id: "ID",
@@ -153,9 +160,10 @@ class MessageAdmin(ModelView, model=Message):
 class RateLimitAdmin(ModelView, model=RateLimit):
     name = "Лимит"
     name_plural = "Лимиты запросов"
-    column_list = [RateLimit.limit_id, RateLimit.student_id, RateLimit.limit_date, RateLimit.request_count]
-    can_export = False
     icon = "fa-solid fa-stopwatch"
+    can_export = False
+    
+    column_list = [RateLimit.limit_id, RateLimit.student_id, RateLimit.limit_date, RateLimit.request_count]
     
     column_labels = {
         RateLimit.limit_id: "ID",
@@ -167,9 +175,10 @@ class RateLimitAdmin(ModelView, model=RateLimit):
 class ScheduleItemAdmin(ModelView, model=ScheduleItem):
     name = "Расписание"
     name_plural = "Расписание"
-    column_list = [ScheduleItem.schedule_id, ScheduleItem.event_name, ScheduleItem.event_date, ScheduleItem.event_type]
-    can_export = False
     icon = "fa-solid fa-calendar"
+    can_export = False
+    
+    column_list = [ScheduleItem.schedule_id, ScheduleItem.event_name, ScheduleItem.event_date, ScheduleItem.event_type]
     
     column_labels = {
         ScheduleItem.schedule_id: "ID",
@@ -183,9 +192,10 @@ class ScheduleItemAdmin(ModelView, model=ScheduleItem):
 class AttestationTestAdmin(ModelView, model=AttestationTest):
     name = "Тест"
     name_plural = "Тесты"
-    column_list = [AttestationTest.test_id, AttestationTest.title, AttestationTest.passing_score, AttestationTest.is_active]
-    can_export = False
     icon = "fa-solid fa-clipboard-check"
+    can_export = False
+    
+    column_list = [AttestationTest.test_id, AttestationTest.title, AttestationTest.passing_score, AttestationTest.is_active]
     
     column_labels = {
         AttestationTest.test_id: "ID",
@@ -201,9 +211,10 @@ class AttestationTestAdmin(ModelView, model=AttestationTest):
 class TestResultAdmin(ModelView, model=TestResult):
     name = "Результат теста"
     name_plural = "Результаты тестов"
-    column_list = [TestResult.result_id, TestResult.student_id, TestResult.test_id, TestResult.score, TestResult.passed]
-    can_export = False
     icon = "fa-solid fa-poll"
+    can_export = False
+    
+    column_list = [TestResult.result_id, TestResult.student_id, TestResult.test_id, TestResult.score, TestResult.passed]
     
     column_labels = {
         TestResult.result_id: "ID",
@@ -213,6 +224,24 @@ class TestResultAdmin(ModelView, model=TestResult):
         TestResult.passed: "Сдан",
         TestResult.completed_at: "Завершено",
         TestResult.time_spent_minutes: "Время (мин)"
+    }
+
+
+class FeedbackAdmin(ModelView, model=Feedback):
+    name = "Отзыв"
+    name_plural = "Отзывы"
+    icon = "fa-solid fa-star"
+    can_export = False
+    
+    column_list = [Feedback.id, Feedback.student_id, Feedback.rating, Feedback.created_at]
+    
+    column_labels = {
+        Feedback.id: "ID",
+        Feedback.rating: "Оценка",
+        Feedback.comment: "Комментарий",
+        Feedback.created_at: "Создан",
+        Feedback.telegram_user_id: "Telegram ID",
+        Feedback.message_id: "Message ID"
     }
 
 
@@ -269,5 +298,6 @@ def setup_admin(app):
     admin.add_view(ScheduleItemAdmin)
     admin.add_view(AttestationTestAdmin)
     admin.add_view(TestResultAdmin)
+    admin.add_view(FeedbackAdmin)
     
     return admin
