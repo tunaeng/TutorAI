@@ -19,7 +19,7 @@ td:has(.form-check-input[type="checkbox"]) {
     display: none !important;
 }
 
-/* Скрываем dropdown меню массовых операций */
-.dropdown-menu {
+/* Скрываем dropdown меню массовых операций (ВНИМАНИЕ: Это также скрывает меню экспорта!) */
+/* .dropdown-menu {
     display: none !important;
-}
+} */

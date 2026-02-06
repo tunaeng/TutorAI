@@ -9,16 +9,18 @@ from app.models.education import (
     StudentModuleProgress, Message, RateLimit, ScheduleItem,
     AttestationTest, TestResult, Feedback
 )
-
-
 class StudentAdmin(ModelView, model=Student):
     name = "Студент"
     name_plural = "Студенты"
     icon = "fa-solid fa-user"
-    can_export = False
+    can_export = True
     
     column_list = [Student.student_id, Student.last_name, Student.first_name, Student.phone, Student.status]
     column_details_list = [Student.student_id, Student.last_name, Student.first_name, Student.patronymic, Student.phone, Student.telegram_user_id, Student.status, Student.created_at]
+    
+    column_searchable_list = [Student.student_id, Student.last_name, Student.first_name, Student.phone, Student.telegram_user_id]
+    column_filters = [Student.status, Student.program_id]
+    column_sortable_list = [Student.student_id, Student.last_name, Student.first_name, Student.phone, Student.status, Student.created_at]
     
     column_labels = {
         Student.student_id: "ID",
@@ -35,13 +37,16 @@ class StudentAdmin(ModelView, model=Student):
     form_columns = [Student.first_name, Student.last_name, Student.patronymic, Student.phone, Student.program_id, Student.telegram_user_id, Student.telegram_chat_id, Student.status]
 
 
+
 class ProgramAdmin(ModelView, model=Program):
     name = "Программа"
     name_plural = "Программы"
     icon = "fa-solid fa-graduation-cap"
-    can_export = False
+    can_export = True
     
     column_list = [Program.program_id, Program.name, Program.total_hours]
+    column_searchable_list = [Program.name]
+    column_sortable_list = [Program.program_id, Program.name, Program.total_hours]
     
     column_labels = {
         Program.program_id: "ID",
@@ -52,13 +57,17 @@ class ProgramAdmin(ModelView, model=Program):
     }
 
 
+
 class CourseModuleAdmin(ModelView, model=CourseModule):
     name = "Модуль"
     name_plural = "Модули"
     icon = "fa-solid fa-book"
-    can_export = False
+    can_export = True
     
     column_list = [CourseModule.module_id, CourseModule.name, CourseModule.order_index, CourseModule.total_hours]
+    column_searchable_list = [CourseModule.name]
+    column_filters = [CourseModule.program_id]
+    column_sortable_list = [CourseModule.module_id, CourseModule.name, CourseModule.order_index, CourseModule.total_hours]
     
     column_labels = {
         CourseModule.module_id: "ID",
@@ -72,13 +81,18 @@ class CourseModuleAdmin(ModelView, model=CourseModule):
     }
 
 
+
+
 class TopicAdmin(ModelView, model=Topic):
     name = "Тема"
     name_plural = "Темы"
     icon = "fa-solid fa-chalkboard-teacher"
-    can_export = False
+    can_export = True
     
     column_list = [Topic.topic_id, Topic.name, Topic.order_index]
+    column_searchable_list = [Topic.name]
+    column_filters = [Topic.module_id]
+    column_sortable_list = [Topic.topic_id, Topic.name, Topic.order_index]
     
     column_labels = {
         Topic.topic_id: "ID",
@@ -93,13 +107,18 @@ class TopicAdmin(ModelView, model=Topic):
     }
 
 
+
+
 class CourseMaterialAdmin(ModelView, model=CourseMaterial):
     name = "Материал"
     name_plural = "Материалы"
     icon = "fa-solid fa-file-alt"
-    can_export = False
+    can_export = True
     
     column_list = [CourseMaterial.material_id, CourseMaterial.title, CourseMaterial.material_type, CourseMaterial.is_public]
+    column_searchable_list = [CourseMaterial.title, CourseMaterial.material_type]
+    column_filters = [CourseMaterial.material_type, CourseMaterial.is_public]
+    column_sortable_list = [CourseMaterial.material_id, CourseMaterial.title, CourseMaterial.material_type]
     
     column_labels = {
         CourseMaterial.material_id: "ID",
@@ -116,13 +135,16 @@ class CourseMaterialAdmin(ModelView, model=CourseMaterial):
     }
 
 
+
 class StudentModuleProgressAdmin(ModelView, model=StudentModuleProgress):
     name = "Прогресс"
     name_plural = "Прогресс студентов"
     icon = "fa-solid fa-chart-line"
-    can_export = False
+    can_export = True
     
     column_list = [StudentModuleProgress.progress_id, StudentModuleProgress.student_id, StudentModuleProgress.module_id, StudentModuleProgress.status, StudentModuleProgress.progress_percentage]
+    column_searchable_list = [StudentModuleProgress.student_id, StudentModuleProgress.status]
+    column_sortable_list = [StudentModuleProgress.progress_id, StudentModuleProgress.student_id, StudentModuleProgress.module_id, StudentModuleProgress.status, StudentModuleProgress.progress_percentage]
     
     column_labels = {
         StudentModuleProgress.progress_id: "ID",
@@ -135,15 +157,19 @@ class StudentModuleProgressAdmin(ModelView, model=StudentModuleProgress):
     }
 
 
+
 class MessageAdmin(ModelView, model=Message):
     name = "Сообщение"
     name_plural = "Сообщения"
     icon = "fa-solid fa-comment"
     can_create = False
     can_edit = False
-    can_export = False
+    can_export = True
     
     column_list = [Message.message_id, Message.sender_type, Message.role, Message.telegram_user_id, Message.text_content, Message.created_at]
+    column_searchable_list = [Message.message_id, Message.text_content, Message.telegram_user_id]
+    column_filters = [Message.student_id, Message.sender_type, Message.role, Message.created_at]
+    column_sortable_list = [Message.message_id, Message.sender_type, Message.role, Message.telegram_user_id, Message.text_content, Message.created_at]
     
     column_labels = {
         Message.message_id: "ID",
@@ -161,9 +187,11 @@ class RateLimitAdmin(ModelView, model=RateLimit):
     name = "Лимит"
     name_plural = "Лимиты запросов"
     icon = "fa-solid fa-stopwatch"
-    can_export = False
+    can_export = True
     
     column_list = [RateLimit.limit_id, RateLimit.student_id, RateLimit.limit_date, RateLimit.request_count]
+    column_searchable_list = [RateLimit.student_id, RateLimit.limit_date]
+    column_sortable_list = [RateLimit.limit_id, RateLimit.student_id, RateLimit.limit_date, RateLimit.request_count]
     
     column_labels = {
         RateLimit.limit_id: "ID",
@@ -176,9 +204,11 @@ class ScheduleItemAdmin(ModelView, model=ScheduleItem):
     name = "Расписание"
     name_plural = "Расписание"
     icon = "fa-solid fa-calendar"
-    can_export = False
+    can_export = True
     
     column_list = [ScheduleItem.schedule_id, ScheduleItem.event_name, ScheduleItem.event_date, ScheduleItem.event_type]
+    column_searchable_list = [ScheduleItem.event_name, ScheduleItem.event_type]
+    column_sortable_list = [ScheduleItem.schedule_id, ScheduleItem.event_name, ScheduleItem.event_date, ScheduleItem.event_type]
     
     column_labels = {
         ScheduleItem.schedule_id: "ID",
@@ -193,9 +223,11 @@ class AttestationTestAdmin(ModelView, model=AttestationTest):
     name = "Тест"
     name_plural = "Тесты"
     icon = "fa-solid fa-clipboard-check"
-    can_export = False
+    can_export = True
     
     column_list = [AttestationTest.test_id, AttestationTest.title, AttestationTest.passing_score, AttestationTest.is_active]
+    column_searchable_list = [AttestationTest.title]
+    column_sortable_list = [AttestationTest.test_id, AttestationTest.title, AttestationTest.passing_score, AttestationTest.is_active]
     
     column_labels = {
         AttestationTest.test_id: "ID",
@@ -208,13 +240,16 @@ class AttestationTestAdmin(ModelView, model=AttestationTest):
     }
 
 
+
 class TestResultAdmin(ModelView, model=TestResult):
     name = "Результат теста"
     name_plural = "Результаты тестов"
     icon = "fa-solid fa-poll"
-    can_export = False
+    can_export = True
     
     column_list = [TestResult.result_id, TestResult.student_id, TestResult.test_id, TestResult.score, TestResult.passed]
+    column_searchable_list = [TestResult.student_id, TestResult.test_id]
+    column_sortable_list = [TestResult.result_id, TestResult.student_id, TestResult.test_id, TestResult.score, TestResult.passed, TestResult.completed_at]
     
     column_labels = {
         TestResult.result_id: "ID",
@@ -227,13 +262,17 @@ class TestResultAdmin(ModelView, model=TestResult):
     }
 
 
+
 class FeedbackAdmin(ModelView, model=Feedback):
     name = "Отзыв"
     name_plural = "Отзывы"
     icon = "fa-solid fa-star"
-    can_export = False
+    can_export = True
     
     column_list = [Feedback.id, Feedback.student_id, Feedback.rating, Feedback.created_at]
+    column_searchable_list = [Feedback.comment, Feedback.student_id]
+    column_filters = [Feedback.rating, Feedback.student_id]
+    column_sortable_list = [Feedback.id, Feedback.student_id, Feedback.rating, Feedback.created_at]
     
     column_labels = {
         Feedback.id: "ID",
