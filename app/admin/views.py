@@ -56,6 +56,8 @@ class ProgramAdmin(ModelView, model=Program):
         Program.created_at: "Создана"
     }
 
+    form_excluded_columns = [Program.students, Program.modules, Program.materials]
+
 
 
 class CourseModuleAdmin(ModelView, model=CourseModule):
@@ -79,6 +81,8 @@ class CourseModuleAdmin(ModelView, model=CourseModule):
         CourseModule.practice_hours: "Практика",
         CourseModule.self_study_hours: "Самостоятельно"
     }
+
+    form_excluded_columns = [CourseModule.topics, CourseModule.materials, CourseModule.tests, CourseModule.progress]
 
 
 
@@ -106,6 +110,8 @@ class TopicAdmin(ModelView, model=Topic):
         Topic.is_final_assessment: "Финальная аттестация"
     }
 
+    form_excluded_columns = [Topic.materials]
+
 
 
 
@@ -131,7 +137,7 @@ class CourseMaterialAdmin(ModelView, model=CourseMaterial):
     }
     
     form_widget_args = {
-        "file_url": {"placeholder": "Введите URL файла из Supabase Storage"}
+        "file_url": {"placeholder": "Введите URL файла"}
     }
 
 
@@ -238,6 +244,8 @@ class AttestationTestAdmin(ModelView, model=AttestationTest):
         AttestationTest.time_limit_minutes: "Время (мин)",
         AttestationTest.is_active: "Активен"
     }
+
+    form_excluded_columns = [AttestationTest.results]
 
 
 
