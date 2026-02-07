@@ -6,7 +6,7 @@ from datetime import datetime, date
 from typing import Optional, List
 from sqlalchemy import (
     Column, BigInteger, String, Text, Boolean, DateTime, Date, Integer,
-    ForeignKey, UniqueConstraint, Index
+    ForeignKey, UniqueConstraint, Index, LargeBinary
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
@@ -137,7 +137,9 @@ class CourseMaterial(Base):
     topic_id: Mapped[Optional[int]] = mapped_column(BigInteger, ForeignKey('topics.topic_id', ondelete='CASCADE'), nullable=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     content: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    file_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    file_data: Mapped[Optional[bytes]] = mapped_column(LargeBinary, nullable=True)
+    file_size: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    file_mimetype: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     material_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     order_index: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     is_public: Mapped[bool] = mapped_column(Boolean, server_default='false')

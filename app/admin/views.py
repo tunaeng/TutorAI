@@ -121,24 +121,23 @@ class CourseMaterialAdmin(ModelView, model=CourseMaterial):
     icon = "fa-solid fa-file-alt"
     can_export = True
     
-    column_list = [CourseMaterial.material_id, CourseMaterial.title, CourseMaterial.material_type, CourseMaterial.is_public]
-    column_searchable_list = [CourseMaterial.title, CourseMaterial.material_type]
-    column_filters = [CourseMaterial.material_type, CourseMaterial.is_public]
-    column_sortable_list = [CourseMaterial.material_id, CourseMaterial.title, CourseMaterial.material_type]
+    column_list = [CourseMaterial.material_id, CourseMaterial.title, CourseMaterial.file_mimetype, CourseMaterial.file_size, CourseMaterial.material_type, CourseMaterial.is_public]
+    column_searchable_list = [CourseMaterial.title, CourseMaterial.material_type, CourseMaterial.file_mimetype]
+    column_filters = [CourseMaterial.material_type, CourseMaterial.is_public, CourseMaterial.file_mimetype]
+    column_sortable_list = [CourseMaterial.material_id, CourseMaterial.title, CourseMaterial.material_type, CourseMaterial.file_size]
     
     column_labels = {
         CourseMaterial.material_id: "ID",
         CourseMaterial.title: "Название",
         CourseMaterial.content: "Содержимое",
-        CourseMaterial.file_url: "Ссылка на файл",
+        CourseMaterial.file_size: "Размер файла",
+        CourseMaterial.file_mimetype: "Тип файла",
         CourseMaterial.material_type: "Тип",
         CourseMaterial.order_index: "Порядок",
         CourseMaterial.is_public: "Публичный"
     }
     
-    form_widget_args = {
-        "file_url": {"placeholder": "Введите URL файла"}
-    }
+    form_excluded_columns = [CourseMaterial.file_data]
 
 
 
