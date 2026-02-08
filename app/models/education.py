@@ -1,12 +1,12 @@
 """
-SQLAlchemy models matching existing Supabase schema
+SQLAlchemy models matching the user's actual database schema (Step 653)
 """
 
 from datetime import datetime, date
 from typing import Optional, List
 from sqlalchemy import (
     Column, BigInteger, String, Text, Boolean, DateTime, Date, Integer,
-    ForeignKey, UniqueConstraint, Index, LargeBinary
+    ForeignKey, UniqueConstraint, Index, LargeBinary, Numeric
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
@@ -45,10 +45,7 @@ class Student(Base):
     telegram_user_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True, unique=True)
     telegram_chat_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True, unique=True)
     status: Mapped[str] = mapped_column(String(50), server_default='active')
-    auth_timestamp: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    deauth_timestamp: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
     program: Mapped["Program"] = relationship("Program", back_populates="students")
@@ -60,7 +57,6 @@ class Student(Base):
     feedbacks: Mapped[List["Feedback"]] = relationship("Feedback", back_populates="student")
     
     __table_args__ = (
-        Index('idx_students_telegram_user_id', 'telegram_user_id'),
         Index('idx_students_phone', 'phone'),
         Index('idx_students_program_id', 'program_id'),
     )
@@ -91,10 +87,6 @@ class CourseModule(Base):
     progress: Mapped[List["StudentModuleProgress"]] = relationship("StudentModuleProgress", back_populates="module")
     tests: Mapped[List["AttestationTest"]] = relationship("AttestationTest", back_populates="module")
     
-    __table_args__ = (
-        Index('idx_modules_program_id', 'program_id'),
-    )
-    
     def __str__(self):
         return self.name
 
@@ -118,10 +110,6 @@ class Topic(Base):
     # Relationships
     module: Mapped["CourseModule"] = relationship("CourseModule", back_populates="topics")
     materials: Mapped[List["CourseMaterial"]] = relationship("CourseMaterial", back_populates="topic")
-    
-    __table_args__ = (
-        Index('idx_topics_module_id', 'module_id'),
-    )
     
     def __str__(self):
         return self.name
@@ -149,14 +137,6 @@ class CourseMaterial(Base):
     program: Mapped["Program"] = relationship("Program", back_populates="materials")
     module: Mapped[Optional["CourseModule"]] = relationship("CourseModule", back_populates="materials")
     topic: Mapped[Optional["Topic"]] = relationship("Topic", back_populates="materials")
-    
-    __table_args__ = (
-        Index('idx_course_materials_program_id', 'program_id'),
-        Index('idx_course_materials_topic_id', 'topic_id'),
-    )
-    
-    def __str__(self):
-        return self.title
 
 
 # 6. STUDENT MODULE PROGRESS
@@ -171,9 +151,7 @@ class StudentModuleProgress(Base):
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     topics_completed: Mapped[int] = mapped_column(Integer, server_default='0')
     total_topics: Mapped[int] = mapped_column(Integer, server_default='0')
-    progress_percentage: Mapped[int] = mapped_column(Integer, server_default='0')
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    progress_percentage: Mapped[float] = mapped_column(Numeric(5, 2), server_default='0.0')
     
     # Relationships
     student: Mapped["Student"] = relationship("Student", back_populates="progress")
@@ -181,12 +159,7 @@ class StudentModuleProgress(Base):
     
     __table_args__ = (
         UniqueConstraint('student_id', 'module_id'),
-        Index('idx_student_progress_student_id', 'student_id'),
-        Index('idx_student_progress_module_id', 'module_id'),
     )
-    
-    def __str__(self):
-        return f"Progress: Student {self.student_id} Module {self.module_id}"
 
 
 # 7. MESSAGES
@@ -195,24 +168,13 @@ class Message(Base):
     
     message_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     student_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('students.student_id', ondelete='CASCADE'), nullable=False)
-    sender_type: Mapped[str] = mapped_column(String(20), nullable=False)
     role: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
-    telegram_user_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    sender_type: Mapped[str] = mapped_column(String(20), nullable=False)
     text_content: Mapped[str] = mapped_column(Text, nullable=False)
-    message_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    processing_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
     student: Mapped["Student"] = relationship("Student", back_populates="messages")
-    
-    __table_args__ = (
-        Index('idx_messages_student_id', 'student_id'),
-        Index('idx_messages_created_at', 'created_at'),
-    )
-    
-    def __str__(self):
-        return f"{self.sender_type}: {self.text_content[:30]}..." if len(self.text_content) > 30 else f"{self.sender_type}: {self.text_content}"
 
 
 # 8. RATE LIMITS
@@ -223,19 +185,13 @@ class RateLimit(Base):
     student_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('students.student_id', ondelete='CASCADE'), nullable=False)
     limit_date: Mapped[date] = mapped_column(Date, nullable=False)
     request_count: Mapped[int] = mapped_column(Integer, server_default='0')
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
     student: Mapped["Student"] = relationship("Student", back_populates="rate_limits")
     
     __table_args__ = (
         UniqueConstraint('student_id', 'limit_date'),
-        Index('idx_rate_limits_student_id_date', 'student_id', 'limit_date'),
     )
-    
-    def __str__(self):
-        return f"Rate Limit {self.limit_date} (Student {self.student_id})"
 
 
 # 9. SCHEDULE ITEMS
@@ -247,19 +203,10 @@ class ScheduleItem(Base):
     event_name: Mapped[str] = mapped_column(String(255), nullable=False)
     event_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     event_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
     student: Mapped["Student"] = relationship("Student", back_populates="schedule_items")
-    
-    __table_args__ = (
-        Index('idx_schedule_items_student_id', 'student_id'),
-        Index('idx_schedule_items_event_date', 'event_date'),
-    )
-    
-    def __str__(self):
-        return f"{self.event_name} ({self.event_date})"
 
 
 # 10. ATTESTATION TESTS
@@ -269,23 +216,12 @@ class AttestationTest(Base):
     test_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     module_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('course_modules.module_id', ondelete='CASCADE'), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     passing_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    max_attempts: Mapped[int] = mapped_column(Integer, server_default='3')
-    time_limit_minutes: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    is_active: Mapped[bool] = mapped_column(Boolean, server_default='true')
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
     module: Mapped["CourseModule"] = relationship("CourseModule", back_populates="tests")
     results: Mapped[List["TestResult"]] = relationship("TestResult", back_populates="test")
-    
-    __table_args__ = (
-        Index('idx_attestation_tests_module_id', 'module_id'),
-    )
-    
-    def __str__(self):
-        return self.title
 
 
 # 11. TEST RESULTS
@@ -295,25 +231,13 @@ class TestResult(Base):
     result_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     student_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('students.student_id', ondelete='CASCADE'), nullable=False)
     test_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('attestation_tests.test_id', ondelete='CASCADE'), nullable=False)
-    attempt_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    percentage: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     passed: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
-    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    time_spent_minutes: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
     student: Mapped["Student"] = relationship("Student", back_populates="test_results")
     test: Mapped["AttestationTest"] = relationship("AttestationTest", back_populates="results")
-    
-    __table_args__ = (
-        Index('idx_test_results_student_id', 'student_id'),
-        Index('idx_test_results_test_id', 'test_id'),
-    )
-
-    def __str__(self):
-        return f"Test Result {self.result_id} (Score: {self.score})"
 
 
 # 12. FEEDBACK
@@ -321,19 +245,11 @@ class Feedback(Base):
     __tablename__ = "feedback"
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    student_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('students.student_id', ondelete='CASCADE'), nullable=True)
+    student_id: Mapped[Optional[int]] = mapped_column(BigInteger, ForeignKey('students.student_id', ondelete='CASCADE'), nullable=True)
     telegram_user_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
     rating: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     comment: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    message_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     
     # Relationships
     student: Mapped[Optional["Student"]] = relationship("Student", back_populates="feedbacks")
-    
-    __table_args__ = (
-        Index('idx_feedback_student_id', 'student_id'),
-    )
-    
-    def __str__(self):
-        return f"Feedback {self.id} (Rating: {self.rating})"
