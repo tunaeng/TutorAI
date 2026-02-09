@@ -21,7 +21,7 @@ class StudentAdmin(ModelView, model=Student):
         Student.first_name, 
         Student.patronymic, 
         Student.phone, 
-        Student.status, 
+        Student.telegram_user_id, 
         Student.created_at
     ]
     column_labels = {
@@ -36,6 +36,21 @@ class StudentAdmin(ModelView, model=Student):
         Student.telegram_chat_id: "Chat ID",
         Student.created_at: "Дата регистрации"
     }
+    column_searchable_list = [
+        Student.last_name,
+        Student.first_name,
+        Student.phone,
+        Student.telegram_user_id
+    ]
+    column_sortable_list = [
+        Student.student_id,
+        Student.last_name,
+        Student.first_name,
+        Student.patronymic,
+        Student.phone,
+        Student.telegram_user_id,
+        Student.created_at
+    ]
     form_columns = [
         Student.last_name, 
         Student.first_name, 
@@ -46,6 +61,7 @@ class StudentAdmin(ModelView, model=Student):
         Student.telegram_user_id, 
         Student.telegram_chat_id
     ]
+
 
 class ProgramAdmin(ModelView, model=Program):
     name = "Программа"
@@ -60,6 +76,13 @@ class ProgramAdmin(ModelView, model=Program):
         Program.total_hours: "Всего часов",
         Program.created_at: "Дата создания"
     }
+    column_sortable_list = [
+        Program.program_id,
+        Program.name,
+        Program.total_hours,
+        Program.created_at
+    ]
+
 
 class CourseModuleAdmin(ModelView, model=CourseModule):
     name = "Модуль"
@@ -84,6 +107,14 @@ class CourseModuleAdmin(ModelView, model=CourseModule):
         CourseModule.practice_hours: "Практика",
         CourseModule.self_study_hours: "Самост. работа"
     }
+    column_sortable_list = [
+        CourseModule.module_id,
+        CourseModule.name,
+        CourseModule.program,
+        CourseModule.order_index,
+        CourseModule.total_hours
+    ]
+    column_searchable_list = [CourseModule.name]
 
 class TopicAdmin(ModelView, model=Topic):
     name = "Тема"
@@ -110,6 +141,15 @@ class TopicAdmin(ModelView, model=Topic):
         Topic.is_intermediate_assessment: "Пром. аттестация",
         Topic.is_final_assessment: "Итоговая аттестация"
     }
+    column_sortable_list = [
+        Topic.topic_id,
+        Topic.name,
+        Topic.module,
+        Topic.order_index,
+        Topic.is_intermediate_assessment,
+        Topic.is_final_assessment
+    ]
+    column_searchable_list = [Topic.name]
 
 class CourseMaterialAdmin(ModelView, model=CourseMaterial):
     name = "Материал"
@@ -138,6 +178,13 @@ class CourseMaterialAdmin(ModelView, model=CourseMaterial):
         CourseMaterial.file_mimetype: "Тип файла (MIME)",
         "upload": "Загрузить файл напрямую"
     }
+    column_sortable_list = [
+        CourseMaterial.material_id,
+        CourseMaterial.title,
+        CourseMaterial.material_type,
+        CourseMaterial.is_public
+    ]
+    column_searchable_list = [CourseMaterial.title]
     form_columns = [
         CourseMaterial.program, 
         CourseMaterial.module, 
@@ -182,6 +229,14 @@ class ScheduleItemAdmin(ModelView, model=ScheduleItem):
         ScheduleItem.event_type: "Тип",
         ScheduleItem.description: "Описание/Адрес"
     }
+    column_sortable_list = [
+        ScheduleItem.schedule_id,
+        ScheduleItem.student,
+        ScheduleItem.event_name,
+        ScheduleItem.event_date,
+        ScheduleItem.event_type
+    ]
+    column_searchable_list = [ScheduleItem.event_name]
 
 class AttestationTestAdmin(ModelView, model=AttestationTest):
     name = "Тест"
@@ -204,6 +259,14 @@ class AttestationTestAdmin(ModelView, model=AttestationTest):
         AttestationTest.time_limit_minutes: "Лимит (мин)",
         AttestationTest.is_active: "Активен"
     }
+    column_sortable_list = [
+        AttestationTest.test_id,
+        AttestationTest.title,
+        AttestationTest.module,
+        AttestationTest.passing_score,
+        AttestationTest.is_active
+    ]
+    column_searchable_list = [AttestationTest.title]
 
 class StudentModuleProgressAdmin(ModelView, model=StudentModuleProgress):
     name = "Прогресс"
@@ -227,6 +290,13 @@ class StudentModuleProgressAdmin(ModelView, model=StudentModuleProgress):
         StudentModuleProgress.total_topics: "Всего тем",
         StudentModuleProgress.progress_percentage: "Прогресс %"
     }
+    column_sortable_list = [
+        StudentModuleProgress.progress_id,
+        StudentModuleProgress.student,
+        StudentModuleProgress.module,
+        StudentModuleProgress.status,
+        StudentModuleProgress.progress_percentage
+    ]
 
 class MessageAdmin(ModelView, model=Message):
     name = "Сообщение"
@@ -238,8 +308,8 @@ class MessageAdmin(ModelView, model=Message):
         Message.student, 
         Message.sender_type, 
         Message.role, 
-        Message.text_content, 
-        Message.created_at
+        Message.created_at,
+        Message.text_content
     ]
     column_labels = {
         Message.message_id: "ID",
@@ -249,6 +319,14 @@ class MessageAdmin(ModelView, model=Message):
         Message.text_content: "Текст сообщения",
         Message.created_at: "Дата"
     }
+    column_sortable_list = [
+        Message.message_id,
+        Message.student,
+        Message.sender_type,
+        Message.role,
+        Message.created_at
+    ]
+    column_searchable_list = [Message.text_content]
 
 class RateLimitAdmin(ModelView, model=RateLimit):
     name = "Лимит"
@@ -261,6 +339,12 @@ class RateLimitAdmin(ModelView, model=RateLimit):
         RateLimit.limit_date: "Дата",
         RateLimit.request_count: "Запросы"
     }
+    column_sortable_list = [
+        RateLimit.limit_id,
+        RateLimit.student,
+        RateLimit.limit_date,
+        RateLimit.request_count
+    ]
 
 class TestResultAdmin(ModelView, model=TestResult):
     name = "Результат"
@@ -281,6 +365,14 @@ class TestResultAdmin(ModelView, model=TestResult):
         TestResult.passed: "Сдан",
         TestResult.created_at: "Дата"
     }
+    column_sortable_list = [
+        TestResult.result_id,
+        TestResult.student,
+        TestResult.test,
+        TestResult.score,
+        TestResult.passed,
+        TestResult.created_at
+    ]
 
 class FeedbackAdmin(ModelView, model=Feedback):
     name = "Отзыв"
@@ -294,6 +386,13 @@ class FeedbackAdmin(ModelView, model=Feedback):
         Feedback.comment: "Комментарий",
         Feedback.created_at: "Дата"
     }
+    column_sortable_list = [
+        Feedback.id,
+        Feedback.student,
+        Feedback.rating,
+        Feedback.created_at
+    ]
+    column_searchable_list = [Feedback.comment]
 
 class AdminAuth(AuthenticationBackend):
     async def login(self, request: Request) -> bool:

@@ -49,12 +49,12 @@ class Student(Base):
     
     # Relationships
     program: Mapped["Program"] = relationship("Program", back_populates="students")
-    progress: Mapped[List["StudentModuleProgress"]] = relationship("StudentModuleProgress", back_populates="student")
-    messages: Mapped[List["Message"]] = relationship("Message", back_populates="student")
-    rate_limits: Mapped[List["RateLimit"]] = relationship("RateLimit", back_populates="student")
-    schedule_items: Mapped[List["ScheduleItem"]] = relationship("ScheduleItem", back_populates="student")
-    test_results: Mapped[List["TestResult"]] = relationship("TestResult", back_populates="student")
-    feedbacks: Mapped[List["Feedback"]] = relationship("Feedback", back_populates="student")
+    progress: Mapped[List["StudentModuleProgress"]] = relationship("StudentModuleProgress", back_populates="student", cascade="all, delete-orphan")
+    messages: Mapped[List["Message"]] = relationship("Message", back_populates="student", cascade="all, delete-orphan")
+    rate_limits: Mapped[List["RateLimit"]] = relationship("RateLimit", back_populates="student", cascade="all, delete-orphan")
+    schedule_items: Mapped[List["ScheduleItem"]] = relationship("ScheduleItem", back_populates="student", cascade="all, delete-orphan")
+    test_results: Mapped[List["TestResult"]] = relationship("TestResult", back_populates="student", cascade="all, delete-orphan")
+    feedbacks: Mapped[List["Feedback"]] = relationship("Feedback", back_populates="student", cascade="all, delete-orphan")
     
     __table_args__ = (
         Index('idx_students_phone', 'phone'),
@@ -138,6 +138,9 @@ class CourseMaterial(Base):
     program: Mapped["Program"] = relationship("Program", back_populates="materials")
     module: Mapped[Optional["CourseModule"]] = relationship("CourseModule", back_populates="materials")
     topic: Mapped[Optional["Topic"]] = relationship("Topic", back_populates="materials")
+    
+    def __str__(self):
+        return self.title
 
 
 # 6. STUDENT MODULE PROGRESS
@@ -161,6 +164,9 @@ class StudentModuleProgress(Base):
     __table_args__ = (
         UniqueConstraint('student_id', 'module_id'),
     )
+    
+    def __str__(self):
+        return f"Progress ID: {self.progress_id} (Module: {self.module_id})"
 
 
 # 7. MESSAGES
@@ -179,6 +185,9 @@ class Message(Base):
     
     # Relationships
     student: Mapped["Student"] = relationship("Student", back_populates="messages")
+    
+    def __str__(self):
+        return f"{self.sender_type}: {self.text_content[:30]}..."
 
 
 # 8. RATE LIMITS
@@ -197,6 +206,9 @@ class RateLimit(Base):
         UniqueConstraint('student_id', 'limit_date'),
     )
 
+    def __str__(self):
+        return f"Limit for Student ID: {self.student_id} on {self.limit_date}"
+
 
 # 9. SCHEDULE ITEMS
 class ScheduleItem(Base):
@@ -212,6 +224,9 @@ class ScheduleItem(Base):
     
     # Relationships
     student: Mapped["Student"] = relationship("Student", back_populates="schedule_items")
+    
+    def __str__(self):
+        return f"{self.event_name} ({self.event_date})"
 
 
 # 10. ATTESTATION TESTS
@@ -231,6 +246,9 @@ class AttestationTest(Base):
     # Relationships
     module: Mapped["CourseModule"] = relationship("CourseModule", back_populates="tests")
     results: Mapped[List["TestResult"]] = relationship("TestResult", back_populates="test")
+    
+    def __str__(self):
+        return self.title
 
 
 # 11. TEST RESULTS
@@ -247,6 +265,9 @@ class TestResult(Base):
     # Relationships
     student: Mapped["Student"] = relationship("Student", back_populates="test_results")
     test: Mapped["AttestationTest"] = relationship("AttestationTest", back_populates="results")
+    
+    def __str__(self):
+        return f"Test Result ID: {self.result_id} (Score: {self.score})"
 
 
 # 12. FEEDBACK
@@ -263,3 +284,6 @@ class Feedback(Base):
     
     # Relationships
     student: Mapped[Optional["Student"]] = relationship("Student", back_populates="feedbacks")
+    
+    def __str__(self):
+        return f"Feedback ID: {self.id} (Rating: {self.rating})"
