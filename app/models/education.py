@@ -172,6 +172,9 @@ class Message(Base):
     role: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     sender_type: Mapped[str] = mapped_column(String(20), nullable=False)
     text_content: Mapped[str] = mapped_column(Text, nullable=False)
+    processing_ms: Mapped[Optional[int]] = mapped_column(Integer, server_default='0')
+    telegram_user_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    message_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
@@ -204,6 +207,7 @@ class ScheduleItem(Base):
     event_name: Mapped[str] = mapped_column(String(255), nullable=False)
     event_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     event_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
@@ -217,7 +221,11 @@ class AttestationTest(Base):
     test_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     module_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('course_modules.module_id', ondelete='CASCADE'), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     passing_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    max_attempts: Mapped[int] = mapped_column(Integer, server_default='3')
+    time_limit_minutes: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, server_default='true')
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
@@ -249,6 +257,7 @@ class Feedback(Base):
     student_id: Mapped[Optional[int]] = mapped_column(BigInteger, ForeignKey('students.student_id', ondelete='CASCADE'), nullable=True)
     telegram_user_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
     rating: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    message_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
     comment: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     
