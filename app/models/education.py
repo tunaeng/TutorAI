@@ -81,11 +81,11 @@ class CourseModule(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
-    program: Mapped["Program"] = relationship("Program", back_populates="modules")
-    topics: Mapped[List["Topic"]] = relationship("Topic", back_populates="module")
-    materials: Mapped[List["CourseMaterial"]] = relationship("CourseMaterial", back_populates="module")
-    progress: Mapped[List["StudentModuleProgress"]] = relationship("StudentModuleProgress", back_populates="module")
-    tests: Mapped[List["AttestationTest"]] = relationship("AttestationTest", back_populates="module")
+    program: Mapped["Program"] = relationship("Program", back_populates="modules", lazy='selectin')
+    topics: Mapped[List["Topic"]] = relationship("Topic", back_populates="module", cascade="all, delete-orphan")
+    materials: Mapped[List["CourseMaterial"]] = relationship("CourseMaterial", back_populates="module", cascade="all, delete-orphan")
+    progress: Mapped[List["StudentModuleProgress"]] = relationship("StudentModuleProgress", back_populates="module", cascade="all, delete-orphan")
+    tests: Mapped[List["AttestationTest"]] = relationship("AttestationTest", back_populates="module", cascade="all, delete-orphan")
     
     def __str__(self):
         return self.name
@@ -108,8 +108,8 @@ class Topic(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
-    module: Mapped["CourseModule"] = relationship("CourseModule", back_populates="topics")
-    materials: Mapped[List["CourseMaterial"]] = relationship("CourseMaterial", back_populates="topic")
+    module: Mapped["CourseModule"] = relationship("CourseModule", back_populates="topics", lazy='selectin')
+    materials: Mapped[List["CourseMaterial"]] = relationship("CourseMaterial", back_populates="topic", cascade="all, delete-orphan")
     
     def __str__(self):
         return self.name
@@ -135,9 +135,9 @@ class CourseMaterial(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
-    program: Mapped["Program"] = relationship("Program", back_populates="materials")
-    module: Mapped[Optional["CourseModule"]] = relationship("CourseModule", back_populates="materials")
-    topic: Mapped[Optional["Topic"]] = relationship("Topic", back_populates="materials")
+    program: Mapped["Program"] = relationship("Program", back_populates="materials", lazy='selectin')
+    module: Mapped[Optional["CourseModule"]] = relationship("CourseModule", back_populates="materials", lazy='selectin')
+    topic: Mapped[Optional["Topic"]] = relationship("Topic", back_populates="materials", lazy='selectin')
     
     def __str__(self):
         return self.title
@@ -241,11 +241,12 @@ class AttestationTest(Base):
     max_attempts: Mapped[int] = mapped_column(Integer, server_default='3')
     time_limit_minutes: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, server_default='true')
+    external_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
-    module: Mapped["CourseModule"] = relationship("CourseModule", back_populates="tests")
-    results: Mapped[List["TestResult"]] = relationship("TestResult", back_populates="test")
+    module: Mapped["CourseModule"] = relationship("CourseModule", back_populates="tests", lazy='selectin')
+    results: Mapped[List["TestResult"]] = relationship("TestResult", back_populates="test", cascade="all, delete-orphan")
     
     def __str__(self):
         return self.title

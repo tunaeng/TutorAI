@@ -247,7 +247,8 @@ class AttestationTestAdmin(ModelView, model=AttestationTest):
         AttestationTest.title, 
         AttestationTest.module, 
         AttestationTest.passing_score,
-        AttestationTest.is_active
+        AttestationTest.is_active,
+        AttestationTest.external_url
     ]
     column_labels = {
         AttestationTest.test_id: "ID",
@@ -257,7 +258,8 @@ class AttestationTestAdmin(ModelView, model=AttestationTest):
         AttestationTest.passing_score: "Проходной балл",
         AttestationTest.max_attempts: "Попыток",
         AttestationTest.time_limit_minutes: "Лимит (мин)",
-        AttestationTest.is_active: "Активен"
+        AttestationTest.is_active: "Активен",
+        AttestationTest.external_url: "Внешняя ссылка"
     }
     column_sortable_list = [
         AttestationTest.test_id,
@@ -378,11 +380,18 @@ class FeedbackAdmin(ModelView, model=Feedback):
     name = "Отзыв"
     name_plural = "Отзывы"
     icon = "fa-solid fa-star"
-    column_list = [Feedback.id, Feedback.student, Feedback.rating, Feedback.created_at]
+    column_list = [
+        Feedback.id, 
+        Feedback.student, 
+        Feedback.rating, 
+        Feedback.message_id,
+        Feedback.created_at
+    ]
     column_labels = {
         Feedback.id: "ID",
         Feedback.student: "Студент",
         Feedback.rating: "Оценка",
+        Feedback.message_id: "ID сообщения",
         Feedback.comment: "Комментарий",
         Feedback.created_at: "Дата"
     }
