@@ -1,3 +1,20 @@
+import csv
+import sqladmin.helpers
+import sqladmin.models
+from sqladmin.helpers import _PseudoBuffer
+
+def patched_stream_to_csv(callback):
+    # Используем ; как разделитель для Excel и добавляем BOM для корректной кодировки
+    writer = csv.writer(_PseudoBuffer(), delimiter=';')
+    async def new_callback(w):
+        yield "\ufeff"
+        async for item in callback(w):
+            yield item
+    return new_callback(writer)
+
+sqladmin.helpers.stream_to_csv = patched_stream_to_csv
+sqladmin.models.stream_to_csv = patched_stream_to_csv
+
 from sqladmin import Admin, ModelView
 from sqladmin.authentication import AuthenticationBackend
 from app.core.config import settings
@@ -214,6 +231,7 @@ class ScheduleItemAdmin(ModelView, model=ScheduleItem):
     name = "Занятие"
     name_plural = "Расписание"
     icon = "fa-solid fa-calendar-day"
+    can_export = True
     column_list = [
         ScheduleItem.schedule_id, 
         ScheduleItem.student, 
@@ -242,6 +260,7 @@ class AttestationTestAdmin(ModelView, model=AttestationTest):
     name = "Тест"
     name_plural = "Тесты"
     icon = "fa-solid fa-vial"
+    can_export = True
     column_list = [
         AttestationTest.test_id, 
         AttestationTest.title, 
@@ -274,6 +293,7 @@ class StudentModuleProgressAdmin(ModelView, model=StudentModuleProgress):
     name = "Прогресс"
     name_plural = "Прогресс студентов"
     icon = "fa-solid fa-chart-line"
+    can_export = True
     column_list = [
         StudentModuleProgress.progress_id, 
         StudentModuleProgress.student, 
@@ -305,6 +325,7 @@ class MessageAdmin(ModelView, model=Message):
     name_plural = "История чатов"
     icon = "fa-solid fa-comment-dots"
     can_create = False
+    can_export = True
     column_list = [
         Message.message_id, 
         Message.student, 
@@ -334,6 +355,7 @@ class RateLimitAdmin(ModelView, model=RateLimit):
     name = "Лимит"
     name_plural = "Лимиты GPT"
     icon = "fa-solid fa-stopwatch"
+    can_export = True
     column_list = [RateLimit.limit_id, RateLimit.student, RateLimit.limit_date, RateLimit.request_count]
     column_labels = {
         RateLimit.limit_id: "ID",
@@ -352,6 +374,7 @@ class TestResultAdmin(ModelView, model=TestResult):
     name = "Результат"
     name_plural = "Результаты тестов"
     icon = "fa-solid fa-poll"
+    can_export = True
     column_list = [
         TestResult.result_id, 
         TestResult.student, 
@@ -380,6 +403,7 @@ class FeedbackAdmin(ModelView, model=Feedback):
     name = "Отзыв"
     name_plural = "Отзывы"
     icon = "fa-solid fa-star"
+    can_export = True
     column_list = [
         Feedback.id, 
         Feedback.student, 
