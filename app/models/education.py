@@ -44,6 +44,8 @@ class Student(Base):
     program_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('programs.program_id', ondelete='CASCADE'), nullable=False)
     telegram_user_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True, unique=True)
     telegram_chat_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True, unique=True)
+    max_user_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True, unique=True)
+    max_chat_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True, unique=True)
     status: Mapped[str] = mapped_column(String(50), server_default='active')
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     

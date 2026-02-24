@@ -1,3 +1,4 @@
+import time
 import csv
 import sqladmin.helpers
 import sqladmin.models
@@ -39,6 +40,7 @@ class StudentAdmin(ModelView, model=Student):
         Student.patronymic, 
         Student.phone, 
         Student.telegram_user_id, 
+        Student.max_user_id,
         Student.created_at
     ]
     column_labels = {
@@ -50,14 +52,17 @@ class StudentAdmin(ModelView, model=Student):
         Student.status: "Статус",
         Student.program: "Программа",
         Student.telegram_user_id: "Telegram ID",
-        Student.telegram_chat_id: "Chat ID",
+        Student.telegram_chat_id: "Telegram Chat ID",
+        Student.max_user_id: "Max ID",
+        Student.max_chat_id: "Max Chat ID",
         Student.created_at: "Дата регистрации"
     }
     column_searchable_list = [
         Student.last_name,
         Student.first_name,
         Student.phone,
-        Student.telegram_user_id
+        Student.telegram_user_id,
+        Student.max_user_id
     ]
     column_sortable_list = [
         Student.student_id,
@@ -66,6 +71,7 @@ class StudentAdmin(ModelView, model=Student):
         Student.patronymic,
         Student.phone,
         Student.telegram_user_id,
+        Student.max_user_id,
         Student.created_at
     ]
     form_columns = [
@@ -76,7 +82,9 @@ class StudentAdmin(ModelView, model=Student):
         Student.program, 
         Student.status, 
         Student.telegram_user_id, 
-        Student.telegram_chat_id
+        Student.telegram_chat_id,
+        Student.max_user_id,
+        Student.max_chat_id
     ]
 
 
@@ -99,6 +107,7 @@ class ProgramAdmin(ModelView, model=Program):
         Program.total_hours,
         Program.created_at
     ]
+    column_searchable_list = [Program.name]
 
 
 class CourseModuleAdmin(ModelView, model=CourseModule):
@@ -132,6 +141,12 @@ class CourseModuleAdmin(ModelView, model=CourseModule):
         CourseModule.total_hours
     ]
     column_searchable_list = [CourseModule.name]
+    form_ajax_refs = {
+        "program": {
+            "fields": ("name",),
+            "order_by": "name",
+        }
+    }
 
 class TopicAdmin(ModelView, model=Topic):
     name = "Тема"
@@ -161,12 +176,17 @@ class TopicAdmin(ModelView, model=Topic):
     column_sortable_list = [
         Topic.topic_id,
         Topic.name,
-        Topic.module,
         Topic.order_index,
         Topic.is_intermediate_assessment,
         Topic.is_final_assessment
     ]
     column_searchable_list = [Topic.name]
+    form_ajax_refs = {
+        "module": {
+            "fields": ("name",),
+            "order_by": "name",
+        }
+    }
 
 class CourseMaterialAdmin(ModelView, model=CourseMaterial):
     name = "Материал"
@@ -203,16 +223,16 @@ class CourseMaterialAdmin(ModelView, model=CourseMaterial):
     ]
     column_searchable_list = [CourseMaterial.title]
     form_columns = [
-        CourseMaterial.program, 
-        CourseMaterial.module, 
-        CourseMaterial.topic, 
-        CourseMaterial.title, 
-        CourseMaterial.external_url, 
-        CourseMaterial.content, 
+        "program", 
+        "module", 
+        "topic", 
+        "title", 
+        "external_url", 
+        "content", 
         "upload",
-        CourseMaterial.material_type, 
-        CourseMaterial.order_index, 
-        CourseMaterial.is_public
+        "material_type", 
+        "order_index", 
+        "is_public"
     ]
     form_extra_fields = {
         "upload": FileField("Загрузить файл вручную (PDF/и др.)")
@@ -221,11 +241,16 @@ class CourseMaterialAdmin(ModelView, model=CourseMaterial):
     async def on_model_change(self, data, model, is_created, request: Request):
         form = await request.form()
         file_obj = form.get("upload")
+        # Проверяем, что объект файла существует и имеет имя (т.е. файл был выбран)
         if file_obj and hasattr(file_obj, "filename") and file_obj.filename:
-            content = await file_obj.read()
-            model.file_data = content
-            model.file_size = len(content)
-            model.file_mimetype = file_obj.content_type
+            try:
+                content = await file_obj.read()
+                if content:
+                    model.file_data = content
+                    model.file_size = len(content)
+                    model.file_mimetype = file_obj.content_type
+            except Exception:
+                pass # Пропускаем если не удалось прочитать файл
 
 class ScheduleItemAdmin(ModelView, model=ScheduleItem):
     name = "Занятие"
