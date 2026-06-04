@@ -1,4 +1,3 @@
-import time
 import csv
 import sqladmin.helpers
 import sqladmin.models
@@ -20,12 +19,13 @@ from sqladmin import Admin, ModelView
 from sqladmin.authentication import AuthenticationBackend
 from app.core.config import settings
 from starlette.requests import Request
-from wtforms import FileField, BooleanField
+from wtforms import FileField
 from app.core.database import engine
 from app.models.education import (
     Student, Program, CourseModule, Topic, CourseMaterial,
     StudentModuleProgress, Message, RateLimit, ScheduleItem,
-    AttestationTest, TestResult, Feedback
+    AttestationTest, TestResult, Feedback,
+    RegistrationProgress, ConsultantRequest, RegistryCurrent,
 )
 
 class StudentAdmin(ModelView, model=Student):
@@ -50,6 +50,7 @@ class StudentAdmin(ModelView, model=Student):
         Student.patronymic: "Отчество",
         Student.phone: "Телефон",
         Student.status: "Статус",
+        Student.flow_mode: "Режим (tutor / registration)",
         Student.program: "Программа",
         Student.telegram_user_id: "Telegram ID",
         Student.telegram_chat_id: "Telegram Chat ID",
@@ -79,8 +80,9 @@ class StudentAdmin(ModelView, model=Student):
         Student.first_name, 
         Student.patronymic, 
         Student.phone, 
-        Student.program, 
-        Student.status, 
+        Student.program,
+        Student.status,
+        Student.flow_mode,
         Student.telegram_user_id, 
         Student.telegram_chat_id,
         Student.max_user_id,
@@ -208,6 +210,7 @@ class CourseMaterialAdmin(ModelView, model=CourseMaterial):
         CourseMaterial.title: "Название",
         CourseMaterial.external_url: "Ссылка (URL)",
         CourseMaterial.content: "Текст материала",
+        CourseMaterial.description: "Описание",
         CourseMaterial.material_type: "Тип",
         CourseMaterial.order_index: "Порядок",
         CourseMaterial.is_public: "Опубликовано",
@@ -228,7 +231,8 @@ class CourseMaterialAdmin(ModelView, model=CourseMaterial):
         "topic", 
         "title", 
         "external_url", 
-        "content", 
+        "content",
+        "description",
         "upload",
         "material_type", 
         "order_index", 
@@ -357,6 +361,7 @@ class MessageAdmin(ModelView, model=Message):
         Message.sender_type, 
         Message.role, 
         Message.created_at,
+        Message.max_user_id,
         Message.text_content
     ]
     column_labels = {
@@ -365,6 +370,10 @@ class MessageAdmin(ModelView, model=Message):
         Message.sender_type: "Отправитель",
         Message.role: "Роль",
         Message.text_content: "Текст сообщения",
+        Message.processing_ms: "Время обработки (мс)",
+        Message.telegram_user_id: "Telegram ID",
+        Message.max_user_id: "Max ID",
+        Message.message_type: "Тип сообщения",
         Message.created_at: "Дата"
     }
     column_sortable_list = [
@@ -439,6 +448,8 @@ class FeedbackAdmin(ModelView, model=Feedback):
     column_labels = {
         Feedback.id: "ID",
         Feedback.student: "Студент",
+        Feedback.telegram_user_id: "Telegram ID",
+        Feedback.max_user_id: "Max ID",
         Feedback.rating: "Оценка",
         Feedback.message_id: "ID сообщения",
         Feedback.comment: "Комментарий",
@@ -451,6 +462,182 @@ class FeedbackAdmin(ModelView, model=Feedback):
         Feedback.created_at
     ]
     column_searchable_list = [Feedback.comment]
+
+
+class RegistrationProgressAdmin(ModelView, model=RegistrationProgress):
+    name = "Регистрация"
+    name_plural = "Регистрация (воронка)"
+    icon = "fa-solid fa-clipboard-list"
+    can_export = True
+    column_list = [
+        RegistrationProgress.registration_id,
+        RegistrationProgress.student,
+        RegistrationProgress.current_stage,
+        RegistrationProgress.registration_completed,
+        RegistrationProgress.need_help,
+        RegistrationProgress.waiting_consultant_question,
+        RegistrationProgress.updated_at,
+    ]
+    column_labels = {
+        RegistrationProgress.registration_id: "ID",
+        RegistrationProgress.student: "Студент",
+        RegistrationProgress.current_stage: "Текущий этап",
+        RegistrationProgress.age_50_plus: "Ответ: 50+",
+        RegistrationProgress.need_help: "Нужна помощь",
+        RegistrationProgress.registration_completed: "Регистрация завершена",
+        RegistrationProgress.waiting_consultant_question: "Ожидает вопрос консультанта",
+        RegistrationProgress.created_at: "Создано",
+        RegistrationProgress.updated_at: "Обновлено",
+    }
+    column_sortable_list = [
+        RegistrationProgress.registration_id,
+        RegistrationProgress.student,
+        RegistrationProgress.current_stage,
+        RegistrationProgress.registration_completed,
+        RegistrationProgress.updated_at,
+    ]
+    column_searchable_list = [RegistrationProgress.age_50_plus]
+    form_columns = [
+        RegistrationProgress.student,
+        RegistrationProgress.current_stage,
+        RegistrationProgress.age_50_plus,
+        RegistrationProgress.need_help,
+        RegistrationProgress.registration_completed,
+        RegistrationProgress.waiting_consultant_question,
+    ]
+    form_ajax_refs = {
+        "student": {
+            "fields": ("last_name", "first_name", "phone"),
+            "order_by": "last_name",
+        }
+    }
+
+
+class ConsultantRequestAdmin(ModelView, model=ConsultantRequest):
+    name = "Заявка консультанта"
+    name_plural = "Заявки консультанта"
+    icon = "fa-solid fa-headset"
+    can_export = True
+    column_list = [
+        ConsultantRequest.request_id,
+        ConsultantRequest.student,
+        ConsultantRequest.request_type,
+        ConsultantRequest.stage_number,
+        ConsultantRequest.status,
+        ConsultantRequest.source_channel,
+        ConsultantRequest.created_at,
+    ]
+    column_labels = {
+        ConsultantRequest.request_id: "ID",
+        ConsultantRequest.student: "Студент",
+        ConsultantRequest.registration: "Регистрация",
+        ConsultantRequest.employee_id: "ID сотрудника",
+        ConsultantRequest.request_type: "Тип заявки",
+        ConsultantRequest.stage_number: "Этап (1–7)",
+        ConsultantRequest.question_text: "Текст вопроса",
+        ConsultantRequest.call_time_slot: "Слот звонка",
+        ConsultantRequest.status: "Статус",
+        ConsultantRequest.operator_reply_text: "Ответ оператора",
+        ConsultantRequest.operator_result_text: "Итог оператора",
+        ConsultantRequest.source_channel: "Канал",
+        ConsultantRequest.source_message_id: "ID сообщения (источник)",
+        ConsultantRequest.operator_message_id: "ID сообщения (оператор)",
+        ConsultantRequest.created_at: "Создано",
+        ConsultantRequest.taken_at: "Взято в работу",
+        ConsultantRequest.replied_at: "Отвечено",
+        ConsultantRequest.closed_at: "Закрыто",
+    }
+    column_sortable_list = [
+        ConsultantRequest.request_id,
+        ConsultantRequest.student,
+        ConsultantRequest.status,
+        ConsultantRequest.created_at,
+    ]
+    column_searchable_list = [
+        ConsultantRequest.question_text,
+        ConsultantRequest.operator_reply_text,
+        ConsultantRequest.source_message_id,
+    ]
+    form_columns = [
+        ConsultantRequest.student,
+        ConsultantRequest.registration,
+        ConsultantRequest.employee_id,
+        ConsultantRequest.request_type,
+        ConsultantRequest.stage_number,
+        ConsultantRequest.question_text,
+        ConsultantRequest.call_time_slot,
+        ConsultantRequest.status,
+        ConsultantRequest.operator_reply_text,
+        ConsultantRequest.operator_result_text,
+        ConsultantRequest.source_channel,
+        ConsultantRequest.source_message_id,
+        ConsultantRequest.operator_message_id,
+        ConsultantRequest.taken_at,
+        ConsultantRequest.replied_at,
+        ConsultantRequest.closed_at,
+    ]
+    form_ajax_refs = {
+        "student": {
+            "fields": ("last_name", "first_name", "phone"),
+            "order_by": "last_name",
+        },
+        "registration": {
+            "fields": ("registration_id",),
+            "order_by": "registration_id",
+        },
+    }
+
+
+class RegistryCurrentAdmin(ModelView, model=RegistryCurrent):
+    name = "Запись реестра"
+    name_plural = "Реестр"
+    icon = "fa-solid fa-table"
+    can_export = True
+    column_list = [
+        RegistryCurrent.row_id,
+        RegistryCurrent.app_number,
+        RegistryCurrent.full_name,
+        RegistryCurrent.phone,
+        RegistryCurrent.program_name,
+        RegistryCurrent.status,
+        RegistryCurrent.updated_at,
+    ]
+    column_labels = {
+        RegistryCurrent.row_id: "ID",
+        RegistryCurrent.app_number: "Номер заявки",
+        RegistryCurrent.row_key: "Ключ строки (UUID)",
+        RegistryCurrent.full_name: "ФИО",
+        RegistryCurrent.site: "Площадка",
+        RegistryCurrent.registered_at: "Дата регистрации",
+        RegistryCurrent.program_name: "Программа",
+        RegistryCurrent.training_period: "Период обучения",
+        RegistryCurrent.status: "Статус",
+        RegistryCurrent.person_id_number: "ID персоны",
+        RegistryCurrent.provider_name: "Провайдер",
+        RegistryCurrent.category: "Категория",
+        RegistryCurrent.phone: "Телефон",
+        RegistryCurrent.email: "Email",
+        RegistryCurrent.region: "Регион",
+        RegistryCurrent.employer_name: "Работодатель",
+        RegistryCurrent.first_seen_at: "Первое появление",
+        RegistryCurrent.updated_at: "Обновлено",
+        RegistryCurrent.status_history_terminal_done: "История статусов завершена",
+    }
+    column_sortable_list = [
+        RegistryCurrent.row_id,
+        RegistryCurrent.full_name,
+        RegistryCurrent.phone,
+        RegistryCurrent.status,
+        RegistryCurrent.updated_at,
+    ]
+    column_searchable_list = [
+        RegistryCurrent.full_name,
+        RegistryCurrent.phone,
+        RegistryCurrent.app_number,
+        RegistryCurrent.program_name,
+        RegistryCurrent.email,
+    ]
+
 
 class AdminAuth(AuthenticationBackend):
     async def login(self, request: Request) -> bool:
@@ -473,6 +660,8 @@ def setup_admin(app):
     auth_backend = AdminAuth(secret_key=settings.SECRET_KEY)
     admin = Admin(app, engine, title="TutorAI Admin", authentication_backend=auth_backend)
     admin.add_view(StudentAdmin)
+    admin.add_view(RegistrationProgressAdmin)
+    admin.add_view(ConsultantRequestAdmin)
     admin.add_view(ProgramAdmin)
     admin.add_view(CourseModuleAdmin)
     admin.add_view(TopicAdmin)
@@ -484,4 +673,5 @@ def setup_admin(app):
     admin.add_view(RateLimitAdmin)
     admin.add_view(TestResultAdmin)
     admin.add_view(FeedbackAdmin)
+    admin.add_view(RegistryCurrentAdmin)
     return admin
