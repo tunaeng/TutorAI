@@ -558,6 +558,7 @@ class ConsultantRequestAdmin(ModelView, model=ConsultantRequest):
         ConsultantRequest.stage_number,
         ConsultantRequest.status,
         ConsultantRequest.operator_name,
+        ConsultantRequest.reply_sent_to_user,
         ConsultantRequest.created_at,
     ]
     column_labels = {
@@ -575,6 +576,7 @@ class ConsultantRequestAdmin(ModelView, model=ConsultantRequest):
         ConsultantRequest.created_at: "Создано",
         ConsultantRequest.taken_at: "Взято в работу",
         ConsultantRequest.replied_at: "Отвечено",
+        ConsultantRequest.reply_sent_to_user: "Ответ отправлен пользователю",
         ConsultantRequest.closed_at: "Закрыто",
     }
     column_sortable_list = [
@@ -633,6 +635,7 @@ class ConsultantRequestAdmin(ModelView, model=ConsultantRequest):
         ConsultantRequest.request_type: lambda m, a: REQUEST_TYPE_LABELS.get(m.request_type, m.request_type),
         ConsultantRequest.status: lambda m, a: STATUS_LABELS.get(m.status, m.status),
         ConsultantRequest.call_time_slot: lambda m, a: CALL_SLOT_LABELS.get(m.call_time_slot, m.call_time_slot or "—"),
+        ConsultantRequest.reply_sent_to_user: lambda m, a: "Да" if m.reply_sent_to_user else "Нет",
     }
 
     async def on_model_change(self, data, model, is_created, request: Request):

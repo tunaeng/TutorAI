@@ -356,6 +356,7 @@ class ConsultantRequest(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     taken_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     replied_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    reply_sent_to_user: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default='false')
     closed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     student: Mapped["Student"] = relationship("Student", back_populates="consultant_requests", lazy='selectin')
