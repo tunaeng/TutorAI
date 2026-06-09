@@ -4,12 +4,10 @@ SQLAlchemy models matching the TutorAI PostgreSQL schema.
 
 from datetime import datetime, date
 from typing import Optional, List
-from uuid import UUID
 from sqlalchemy import (
     BigInteger, String, Text, Boolean, DateTime, Date, Integer,
     ForeignKey, UniqueConstraint, Index, LargeBinary, Numeric, CheckConstraint
 )
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column, deferred
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -20,15 +18,21 @@ class Program(Base):
     __tablename__ = "programs"
     
     program_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    name: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    total_hours: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    training_period: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    provider_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    total_hours: Mapped[int] = mapped_column(Integer, nullable=False, server_default='0')
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
     students: Mapped[List["Student"]] = relationship("Student", back_populates="program")
     modules: Mapped[List["CourseModule"]] = relationship("CourseModule", back_populates="program")
     materials: Mapped[List["CourseMaterial"]] = relationship("CourseMaterial", back_populates="program")
+
+    __table_args__ = (
+        CheckConstraint('total_hours >= 0', name='programs_total_hours_chk'),
+        UniqueConstraint('name', 'training_period', name='programs_name_period_provider_uniq'),
+    )
     
     def __str__(self):
         return self.name
@@ -323,9 +327,6 @@ class RegistrationProgress(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     student: Mapped["Student"] = relationship("Student", back_populates="registration", lazy='selectin')
-    consultant_requests: Mapped[List["ConsultantRequest"]] = relationship(
-        "ConsultantRequest", back_populates="registration"
-    )
 
     __table_args__ = (
         Index('idx_registration_progress_student_id', 'student_id'),
@@ -343,29 +344,21 @@ class ConsultantRequest(Base):
     student_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey('students.student_id', ondelete='CASCADE'), nullable=False
     )
-    registration_id: Mapped[Optional[int]] = mapped_column(
-        BigInteger, ForeignKey('registration_progress.registration_id', ondelete='SET NULL'), nullable=True
-    )
-    employee_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
-    request_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    request_type: Mapped[str] = mapped_column(Text, nullable=False)
     stage_number: Mapped[int] = mapped_column(Integer, nullable=False)
     question_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    call_time_slot: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
-    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default='new')
+    call_time_slot: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(Text, nullable=False, server_default='new')
+    employee_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    operator_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     operator_reply_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    operator_result_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    source_channel: Mapped[str] = mapped_column(String(20), nullable=False, server_default='max')
-    source_message_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    operator_message_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    closed_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     taken_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     replied_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     closed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     student: Mapped["Student"] = relationship("Student", back_populates="consultant_requests", lazy='selectin')
-    registration: Mapped[Optional["RegistrationProgress"]] = relationship(
-        "RegistrationProgress", back_populates="consultant_requests", lazy='selectin'
-    )
 
     __table_args__ = (
         CheckConstraint(
@@ -384,46 +377,18 @@ class ConsultantRequest(Base):
             "call_time_slot IS NULL OR call_time_slot IN ('9-13', '13-17', '17-19')",
             name='consultant_requests_slot_chk',
         ),
+        CheckConstraint(
+            """(
+                (request_type = 'chat_question' AND question_text IS NOT NULL AND call_time_slot IS NULL)
+                OR
+                (request_type = 'call_request' AND call_time_slot IS NOT NULL)
+            )""",
+            name='consultant_requests_payload_chk',
+        ),
         Index('idx_consultant_requests_student_id', 'student_id'),
         Index('idx_consultant_requests_status_created_at', 'status', 'created_at'),
         Index('idx_consultant_requests_employee_status', 'employee_id', 'status'),
-        Index('idx_consultant_requests_registration_id', 'registration_id'),
     )
 
     def __str__(self):
         return f"Заявка #{self.request_id} ({self.request_type}, {self.status})"
-
-
-# 15. REGISTRY CURRENT
-class RegistryCurrent(Base):
-    __tablename__ = "registry_current"
-
-    row_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    app_number: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    row_key: Mapped[Optional[UUID]] = mapped_column(PG_UUID(as_uuid=True), nullable=True)
-    full_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    site: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    registered_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    program_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    training_period: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    status: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    person_id_number: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    provider_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    phone: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
-    email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    region: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    employer_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    first_seen_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    status_history_terminal_done: Mapped[bool] = mapped_column(Boolean, server_default='false')
-
-    __table_args__ = (
-        Index('idx_registry_current_phone', 'phone'),
-        Index('idx_registry_current_status', 'status'),
-        Index('idx_registry_current_updated_at', 'updated_at'),
-        Index('idx_registry_current_row_key', 'row_key'),
-    )
-
-    def __str__(self):
-        return self.full_name or self.app_number or f"Реестр #{self.row_id}"

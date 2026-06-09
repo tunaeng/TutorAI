@@ -19,14 +19,31 @@ from sqladmin import Admin, ModelView
 from sqladmin.authentication import AuthenticationBackend
 from app.core.config import settings
 from starlette.requests import Request
-from wtforms import FileField
+from wtforms import FileField, SelectField
 from app.core.database import engine
 from app.models.education import (
     Student, Program, CourseModule, Topic, CourseMaterial,
     StudentModuleProgress, Message, RateLimit, ScheduleItem,
     AttestationTest, TestResult, Feedback,
-    RegistrationProgress, ConsultantRequest, RegistryCurrent,
+    RegistrationProgress, ConsultantRequest,
 )
+
+REQUEST_TYPE_LABELS = {
+    "chat_question": "Вопрос в чате",
+    "call_request": "Заявка на звонок",
+}
+STATUS_LABELS = {
+    "new": "Новая",
+    "in_progress": "В работе",
+    "answered": "Отвечена",
+    "closed": "Закрыта",
+    "cancelled": "Отменена",
+}
+CALL_SLOT_LABELS = {
+    "9-13": "9–13",
+    "13-17": "13–17",
+    "17-19": "17–19",
+}
 
 class StudentAdmin(ModelView, model=Student):
     name = "Студент"
@@ -95,21 +112,37 @@ class ProgramAdmin(ModelView, model=Program):
     name_plural = "Программы"
     icon = "fa-solid fa-graduation-cap"
     can_export = True
-    column_list = [Program.program_id, Program.name, Program.total_hours, Program.created_at]
+    column_list = [
+        Program.program_id,
+        Program.name,
+        Program.training_period,
+        Program.provider_name,
+        Program.total_hours,
+        Program.created_at,
+    ]
     column_labels = {
         Program.program_id: "ID",
         Program.name: "Название",
-        Program.description: "Описание",
+        Program.training_period: "Период обучения",
+        Program.provider_name: "Провайдер",
         Program.total_hours: "Всего часов",
-        Program.created_at: "Дата создания"
+        Program.created_at: "Дата создания",
     }
     column_sortable_list = [
         Program.program_id,
         Program.name,
+        Program.training_period,
+        Program.provider_name,
         Program.total_hours,
-        Program.created_at
+        Program.created_at,
     ]
-    column_searchable_list = [Program.name]
+    column_searchable_list = [Program.name, Program.training_period, Program.provider_name]
+    form_columns = [
+        Program.name,
+        Program.training_period,
+        Program.provider_name,
+        Program.total_hours,
+    ]
 
 
 class CourseModuleAdmin(ModelView, model=CourseModule):
@@ -524,24 +557,21 @@ class ConsultantRequestAdmin(ModelView, model=ConsultantRequest):
         ConsultantRequest.request_type,
         ConsultantRequest.stage_number,
         ConsultantRequest.status,
-        ConsultantRequest.source_channel,
+        ConsultantRequest.operator_name,
         ConsultantRequest.created_at,
     ]
     column_labels = {
         ConsultantRequest.request_id: "ID",
         ConsultantRequest.student: "Студент",
-        ConsultantRequest.registration: "Регистрация",
         ConsultantRequest.employee_id: "ID сотрудника",
         ConsultantRequest.request_type: "Тип заявки",
         ConsultantRequest.stage_number: "Этап (1–7)",
         ConsultantRequest.question_text: "Текст вопроса",
         ConsultantRequest.call_time_slot: "Слот звонка",
         ConsultantRequest.status: "Статус",
+        ConsultantRequest.operator_name: "Имя оператора",
         ConsultantRequest.operator_reply_text: "Ответ оператора",
-        ConsultantRequest.operator_result_text: "Итог оператора",
-        ConsultantRequest.source_channel: "Канал",
-        ConsultantRequest.source_message_id: "ID сообщения (источник)",
-        ConsultantRequest.operator_message_id: "ID сообщения (оператор)",
+        ConsultantRequest.closed_reason: "Причина закрытия",
         ConsultantRequest.created_at: "Создано",
         ConsultantRequest.taken_at: "Взято в работу",
         ConsultantRequest.replied_at: "Отвечено",
@@ -556,22 +586,20 @@ class ConsultantRequestAdmin(ModelView, model=ConsultantRequest):
     column_searchable_list = [
         ConsultantRequest.question_text,
         ConsultantRequest.operator_reply_text,
-        ConsultantRequest.source_message_id,
+        ConsultantRequest.operator_name,
+        ConsultantRequest.closed_reason,
     ]
     form_columns = [
         ConsultantRequest.student,
-        ConsultantRequest.registration,
         ConsultantRequest.employee_id,
         ConsultantRequest.request_type,
         ConsultantRequest.stage_number,
         ConsultantRequest.question_text,
         ConsultantRequest.call_time_slot,
         ConsultantRequest.status,
+        ConsultantRequest.operator_name,
         ConsultantRequest.operator_reply_text,
-        ConsultantRequest.operator_result_text,
-        ConsultantRequest.source_channel,
-        ConsultantRequest.source_message_id,
-        ConsultantRequest.operator_message_id,
+        ConsultantRequest.closed_reason,
         ConsultantRequest.taken_at,
         ConsultantRequest.replied_at,
         ConsultantRequest.closed_at,
@@ -581,62 +609,47 @@ class ConsultantRequestAdmin(ModelView, model=ConsultantRequest):
             "fields": ("last_name", "first_name", "phone"),
             "order_by": "last_name",
         },
-        "registration": {
-            "fields": ("registration_id",),
-            "order_by": "registration_id",
+    }
+    form_overrides = {
+        "request_type": SelectField,
+        "status": SelectField,
+        "call_time_slot": SelectField,
+    }
+    form_args = {
+        "request_type": {
+            "choices": [(value, label) for value, label in REQUEST_TYPE_LABELS.items()],
+            "coerce": str,
+        },
+        "status": {
+            "choices": [(value, label) for value, label in STATUS_LABELS.items()],
+            "coerce": str,
+        },
+        "call_time_slot": {
+            "choices": [("", "—")] + [(value, label) for value, label in CALL_SLOT_LABELS.items()],
+            "coerce": str,
         },
     }
-
-
-class RegistryCurrentAdmin(ModelView, model=RegistryCurrent):
-    name = "Запись реестра"
-    name_plural = "Реестр"
-    icon = "fa-solid fa-table"
-    can_export = True
-    column_list = [
-        RegistryCurrent.row_id,
-        RegistryCurrent.app_number,
-        RegistryCurrent.full_name,
-        RegistryCurrent.phone,
-        RegistryCurrent.program_name,
-        RegistryCurrent.status,
-        RegistryCurrent.updated_at,
-    ]
-    column_labels = {
-        RegistryCurrent.row_id: "ID",
-        RegistryCurrent.app_number: "Номер заявки",
-        RegistryCurrent.row_key: "Ключ строки (UUID)",
-        RegistryCurrent.full_name: "ФИО",
-        RegistryCurrent.site: "Площадка",
-        RegistryCurrent.registered_at: "Дата регистрации",
-        RegistryCurrent.program_name: "Программа",
-        RegistryCurrent.training_period: "Период обучения",
-        RegistryCurrent.status: "Статус",
-        RegistryCurrent.person_id_number: "ID персоны",
-        RegistryCurrent.provider_name: "Провайдер",
-        RegistryCurrent.category: "Категория",
-        RegistryCurrent.phone: "Телефон",
-        RegistryCurrent.email: "Email",
-        RegistryCurrent.region: "Регион",
-        RegistryCurrent.employer_name: "Работодатель",
-        RegistryCurrent.first_seen_at: "Первое появление",
-        RegistryCurrent.updated_at: "Обновлено",
-        RegistryCurrent.status_history_terminal_done: "История статусов завершена",
+    column_formatters = {
+        ConsultantRequest.request_type: lambda m, a: REQUEST_TYPE_LABELS.get(m.request_type, m.request_type),
+        ConsultantRequest.status: lambda m, a: STATUS_LABELS.get(m.status, m.status),
+        ConsultantRequest.call_time_slot: lambda m, a: CALL_SLOT_LABELS.get(m.call_time_slot, m.call_time_slot or "—"),
     }
-    column_sortable_list = [
-        RegistryCurrent.row_id,
-        RegistryCurrent.full_name,
-        RegistryCurrent.phone,
-        RegistryCurrent.status,
-        RegistryCurrent.updated_at,
-    ]
-    column_searchable_list = [
-        RegistryCurrent.full_name,
-        RegistryCurrent.phone,
-        RegistryCurrent.app_number,
-        RegistryCurrent.program_name,
-        RegistryCurrent.email,
-    ]
+
+    async def on_model_change(self, data, model, is_created, request: Request):
+        if not model.call_time_slot:
+            model.call_time_slot = None
+
+        if model.request_type == "chat_question":
+            if not model.question_text:
+                raise ValueError("Для типа «Вопрос в чате» нужно заполнить текст вопроса.")
+            model.call_time_slot = None
+        elif model.request_type == "call_request":
+            if not model.call_time_slot:
+                raise ValueError("Для типа «Заявка на звонок» нужно выбрать слот звонка.")
+        else:
+            raise ValueError(
+                "Недопустимый тип заявки. Выберите «Вопрос в чате» или «Заявка на звонок»."
+            )
 
 
 class AdminAuth(AuthenticationBackend):
@@ -673,5 +686,4 @@ def setup_admin(app):
     admin.add_view(RateLimitAdmin)
     admin.add_view(TestResultAdmin)
     admin.add_view(FeedbackAdmin)
-    admin.add_view(RegistryCurrentAdmin)
     return admin
