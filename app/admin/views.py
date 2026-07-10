@@ -1,4 +1,6 @@
 import csv
+from datetime import datetime, timezone
+
 import sqladmin.helpers
 import sqladmin.models
 from sqladmin.helpers import _PseudoBuffer
@@ -15,15 +17,16 @@ def patched_stream_to_csv(callback):
 sqladmin.helpers.stream_to_csv = patched_stream_to_csv
 sqladmin.models.stream_to_csv = patched_stream_to_csv
 
-from sqladmin import Admin, ModelView
+from sqladmin import Admin, ModelView, action
 from sqladmin.authentication import AuthenticationBackend
 from app.core.config import settings
 from starlette.requests import Request
+from starlette.responses import RedirectResponse
 from wtforms import FileField, SelectField
 from app.core.database import engine
 from app.models.education import (
-    Student, Program, CourseModule, Topic, CourseMaterial,
-    StudentModuleProgress, Message, RateLimit, ScheduleItem,
+    Student, CourseMaterial,
+    StudentModuleProgress, Message, RateLimit,
     AttestationTest, TestResult, Feedback,
     RegistrationProgress, ConsultantRequest,
 )
@@ -68,7 +71,7 @@ class StudentAdmin(ModelView, model=Student):
         Student.phone: "Телефон",
         Student.status: "Статус",
         Student.flow_mode: "Режим (tutor / registration)",
-        Student.program: "Программа",
+        Student.program_id: "ID программы",
         Student.telegram_user_id: "Telegram ID",
         Student.telegram_chat_id: "Telegram Chat ID",
         Student.max_user_id: "Max ID",
@@ -97,7 +100,7 @@ class StudentAdmin(ModelView, model=Student):
         Student.first_name, 
         Student.patronymic, 
         Student.phone, 
-        Student.program,
+        Student.program_id,
         Student.status,
         Student.flow_mode,
         Student.telegram_user_id, 
@@ -107,139 +110,24 @@ class StudentAdmin(ModelView, model=Student):
     ]
 
 
-class ProgramAdmin(ModelView, model=Program):
-    name = "Программа"
-    name_plural = "Программы"
-    icon = "fa-solid fa-graduation-cap"
-    can_export = True
-    column_list = [
-        Program.program_id,
-        Program.name,
-        Program.training_period,
-        Program.provider_name,
-        Program.total_hours,
-        Program.created_at,
-    ]
-    column_labels = {
-        Program.program_id: "ID",
-        Program.name: "Название",
-        Program.training_period: "Период обучения",
-        Program.provider_name: "Провайдер",
-        Program.total_hours: "Всего часов",
-        Program.created_at: "Дата создания",
-    }
-    column_sortable_list = [
-        Program.program_id,
-        Program.name,
-        Program.training_period,
-        Program.provider_name,
-        Program.total_hours,
-        Program.created_at,
-    ]
-    column_searchable_list = [Program.name, Program.training_period, Program.provider_name]
-    form_columns = [
-        Program.name,
-        Program.training_period,
-        Program.provider_name,
-        Program.total_hours,
-    ]
-
-
-class CourseModuleAdmin(ModelView, model=CourseModule):
-    name = "Модуль"
-    name_plural = "Модули"
-    icon = "fa-solid fa-book"
-    can_export = True
-    column_list = [
-        CourseModule.module_id, 
-        CourseModule.name, 
-        CourseModule.program, 
-        CourseModule.order_index,
-        CourseModule.total_hours
-    ]
-    column_labels = {
-        CourseModule.module_id: "ID",
-        CourseModule.name: "Название",
-        CourseModule.program: "Программа",
-        CourseModule.description: "Описание",
-        CourseModule.order_index: "Порядок",
-        CourseModule.total_hours: "Часов (всего)",
-        CourseModule.lecture_hours: "Лекции",
-        CourseModule.practice_hours: "Практика",
-        CourseModule.self_study_hours: "Самост. работа"
-    }
-    column_sortable_list = [
-        CourseModule.module_id,
-        CourseModule.name,
-        CourseModule.program,
-        CourseModule.order_index,
-        CourseModule.total_hours
-    ]
-    column_searchable_list = [CourseModule.name]
-    form_ajax_refs = {
-        "program": {
-            "fields": ("name",),
-            "order_by": "name",
-        }
-    }
-
-class TopicAdmin(ModelView, model=Topic):
-    name = "Тема"
-    name_plural = "Темы"
-    icon = "fa-solid fa-chalkboard-teacher"
-    can_export = True
-    column_list = [
-        Topic.topic_id, 
-        Topic.name, 
-        Topic.module, 
-        Topic.order_index,
-        Topic.is_intermediate_assessment,
-        Topic.is_final_assessment
-    ]
-    column_labels = {
-        Topic.topic_id: "ID",
-        Topic.name: "Название",
-        Topic.module: "Модуль",
-        Topic.description: "Описание",
-        Topic.order_index: "Порядок",
-        Topic.lecture_hours: "Лекции",
-        Topic.practice_hours: "Практика",
-        Topic.self_study_hours: "Самост. работа",
-        Topic.is_intermediate_assessment: "Пром. аттестация",
-        Topic.is_final_assessment: "Итоговая аттестация"
-    }
-    column_sortable_list = [
-        Topic.topic_id,
-        Topic.name,
-        Topic.order_index,
-        Topic.is_intermediate_assessment,
-        Topic.is_final_assessment
-    ]
-    column_searchable_list = [Topic.name]
-    form_ajax_refs = {
-        "module": {
-            "fields": ("name",),
-            "order_by": "name",
-        }
-    }
-
 class CourseMaterialAdmin(ModelView, model=CourseMaterial):
     name = "Материал"
     name_plural = "Материалы"
     icon = "fa-solid fa-file-alt"
     can_export = True
     column_list = [
-        CourseMaterial.material_id, 
-        CourseMaterial.title, 
-        CourseMaterial.material_type, 
-        CourseMaterial.external_url, 
-        CourseMaterial.is_public
+        CourseMaterial.material_id,
+        CourseMaterial.title,
+        CourseMaterial.program_id,
+        CourseMaterial.module_id,
+        CourseMaterial.material_type,
+        CourseMaterial.is_public,
     ]
     column_labels = {
         CourseMaterial.material_id: "ID",
-        CourseMaterial.program: "Программа",
-        CourseMaterial.module: "Модуль",
-        CourseMaterial.topic: "Тема",
+        CourseMaterial.program_id: "ID программы",
+        CourseMaterial.module_id: "ID модуля",
+        CourseMaterial.topic_id: "ID темы",
         CourseMaterial.title: "Название",
         CourseMaterial.external_url: "Ссылка (URL)",
         CourseMaterial.content: "Текст материала",
@@ -259,17 +147,17 @@ class CourseMaterialAdmin(ModelView, model=CourseMaterial):
     ]
     column_searchable_list = [CourseMaterial.title]
     form_columns = [
-        "program", 
-        "module", 
-        "topic", 
-        "title", 
-        "external_url", 
-        "content",
-        "description",
+        CourseMaterial.program_id,
+        CourseMaterial.module_id,
+        CourseMaterial.topic_id,
+        CourseMaterial.title,
+        CourseMaterial.external_url,
+        CourseMaterial.content,
+        CourseMaterial.description,
         "upload",
-        "material_type", 
-        "order_index", 
-        "is_public"
+        CourseMaterial.material_type,
+        CourseMaterial.order_index,
+        CourseMaterial.is_public,
     ]
     form_extra_fields = {
         "upload": FileField("Загрузить файл вручную (PDF/и др.)")
@@ -287,36 +175,7 @@ class CourseMaterialAdmin(ModelView, model=CourseMaterial):
                     model.file_size = len(content)
                     model.file_mimetype = file_obj.content_type
             except Exception:
-                pass # Пропускаем если не удалось прочитать файл
-
-class ScheduleItemAdmin(ModelView, model=ScheduleItem):
-    name = "Занятие"
-    name_plural = "Расписание"
-    icon = "fa-solid fa-calendar-day"
-    can_export = True
-    column_list = [
-        ScheduleItem.schedule_id, 
-        ScheduleItem.student, 
-        ScheduleItem.event_name, 
-        ScheduleItem.event_date,
-        ScheduleItem.event_type
-    ]
-    column_labels = {
-        ScheduleItem.schedule_id: "ID",
-        ScheduleItem.student: "Студент",
-        ScheduleItem.event_name: "Событие",
-        ScheduleItem.event_date: "Дата и время",
-        ScheduleItem.event_type: "Тип",
-        ScheduleItem.description: "Описание/Адрес"
-    }
-    column_sortable_list = [
-        ScheduleItem.schedule_id,
-        ScheduleItem.student,
-        ScheduleItem.event_name,
-        ScheduleItem.event_date,
-        ScheduleItem.event_type
-    ]
-    column_searchable_list = [ScheduleItem.event_name]
+                pass
 
 class AttestationTestAdmin(ModelView, model=AttestationTest):
     name = "Тест"
@@ -324,17 +183,17 @@ class AttestationTestAdmin(ModelView, model=AttestationTest):
     icon = "fa-solid fa-vial"
     can_export = True
     column_list = [
-        AttestationTest.test_id, 
-        AttestationTest.title, 
-        AttestationTest.module, 
+        AttestationTest.test_id,
+        AttestationTest.title,
+        AttestationTest.module_id,
         AttestationTest.passing_score,
         AttestationTest.is_active,
-        AttestationTest.external_url
+        AttestationTest.external_url,
     ]
     column_labels = {
         AttestationTest.test_id: "ID",
         AttestationTest.title: "Название",
-        AttestationTest.module: "Модуль",
+        AttestationTest.module_id: "ID модуля",
         AttestationTest.description: "Описание",
         AttestationTest.passing_score: "Проходной балл",
         AttestationTest.max_attempts: "Попыток",
@@ -345,7 +204,7 @@ class AttestationTestAdmin(ModelView, model=AttestationTest):
     column_sortable_list = [
         AttestationTest.test_id,
         AttestationTest.title,
-        AttestationTest.module,
+        AttestationTest.module_id,
         AttestationTest.passing_score,
         AttestationTest.is_active
     ]
@@ -357,16 +216,16 @@ class StudentModuleProgressAdmin(ModelView, model=StudentModuleProgress):
     icon = "fa-solid fa-chart-line"
     can_export = True
     column_list = [
-        StudentModuleProgress.progress_id, 
-        StudentModuleProgress.student, 
-        StudentModuleProgress.module, 
-        StudentModuleProgress.status, 
-        StudentModuleProgress.progress_percentage
+        StudentModuleProgress.progress_id,
+        StudentModuleProgress.student,
+        StudentModuleProgress.module_id,
+        StudentModuleProgress.status,
+        StudentModuleProgress.progress_percentage,
     ]
     column_labels = {
         StudentModuleProgress.progress_id: "ID",
         StudentModuleProgress.student: "Студент",
-        StudentModuleProgress.module: "Модуль",
+        StudentModuleProgress.module_id: "ID модуля",
         StudentModuleProgress.status: "Статус",
         StudentModuleProgress.started_at: "Начало",
         StudentModuleProgress.completed_at: "Завершено",
@@ -377,7 +236,7 @@ class StudentModuleProgressAdmin(ModelView, model=StudentModuleProgress):
     column_sortable_list = [
         StudentModuleProgress.progress_id,
         StudentModuleProgress.student,
-        StudentModuleProgress.module,
+        StudentModuleProgress.module_id,
         StudentModuleProgress.status,
         StudentModuleProgress.progress_percentage
     ]
@@ -551,9 +410,11 @@ class ConsultantRequestAdmin(ModelView, model=ConsultantRequest):
     name_plural = "Заявки консультанта"
     icon = "fa-solid fa-headset"
     can_export = True
+    list_template = "consultant_request_list.html"
     column_list = [
         ConsultantRequest.request_id,
         ConsultantRequest.student,
+        "student.phone",
         ConsultantRequest.request_type,
         ConsultantRequest.stage_number,
         ConsultantRequest.status,
@@ -564,11 +425,13 @@ class ConsultantRequestAdmin(ModelView, model=ConsultantRequest):
     column_labels = {
         ConsultantRequest.request_id: "ID",
         ConsultantRequest.student: "Студент",
+        "student.phone": "Телефон",
         ConsultantRequest.employee_id: "ID сотрудника",
         ConsultantRequest.request_type: "Тип заявки",
         ConsultantRequest.stage_number: "Этап (1–7)",
         ConsultantRequest.question_text: "Текст вопроса",
         ConsultantRequest.call_time_slot: "Слот звонка",
+        ConsultantRequest.call_scheduled_at: "Запланированный звонок",
         ConsultantRequest.status: "Статус",
         ConsultantRequest.operator_name: "Имя оператора",
         ConsultantRequest.operator_reply_text: "Ответ оператора",
@@ -598,6 +461,7 @@ class ConsultantRequestAdmin(ModelView, model=ConsultantRequest):
         ConsultantRequest.stage_number,
         ConsultantRequest.question_text,
         ConsultantRequest.call_time_slot,
+        ConsultantRequest.call_scheduled_at,
         ConsultantRequest.status,
         ConsultantRequest.operator_name,
         ConsultantRequest.operator_reply_text,
@@ -631,14 +495,20 @@ class ConsultantRequestAdmin(ModelView, model=ConsultantRequest):
             "coerce": str,
         },
     }
+    form_widget_args = {
+        "call_scheduled_at": {"readonly": True},
+    }
     column_formatters = {
         ConsultantRequest.request_type: lambda m, a: REQUEST_TYPE_LABELS.get(m.request_type, m.request_type),
         ConsultantRequest.status: lambda m, a: STATUS_LABELS.get(m.status, m.status),
         ConsultantRequest.call_time_slot: lambda m, a: CALL_SLOT_LABELS.get(m.call_time_slot, m.call_time_slot or "—"),
-        ConsultantRequest.reply_sent_to_user: lambda m, a: "Да" if m.reply_sent_to_user else "Нет",
+        ConsultantRequest.reply_sent_to_user: lambda m, a: "Да" if m.reply_sent_to_user else ("Нет" if m.reply_sent_to_user is not None else "—"),
     }
 
     async def on_model_change(self, data, model, is_created, request: Request):
+        if not is_created:
+            data["call_scheduled_at"] = model.call_scheduled_at
+
         if not model.call_time_slot:
             model.call_time_slot = None
 
@@ -653,6 +523,33 @@ class ConsultantRequestAdmin(ModelView, model=ConsultantRequest):
             raise ValueError(
                 "Недопустимый тип заявки. Выберите «Вопрос в чате» или «Заявка на звонок»."
             )
+
+    @action(
+        name="close_requests",
+        label="Закрыть выбранные",
+        confirmation_message="Закрыть выбранные заявки?",
+        add_in_detail=True,
+        add_in_list=True,
+    )
+    async def close_requests(self, request: Request):
+        pks = [pk for pk in request.query_params.get("pks", "").split(",") if pk]
+        if pks:
+            now = datetime.now(timezone.utc)
+            async with self.session_maker() as session:
+                for pk in pks:
+                    stmt = self._stmt_by_identifier(pk)
+                    result = await session.execute(stmt)
+                    model = result.scalars().first()
+                    if model and model.status not in ("closed", "cancelled"):
+                        model.status = "closed"
+                        if not model.closed_at:
+                            model.closed_at = now
+                await session.commit()
+
+        referer = request.headers.get("Referer")
+        if referer:
+            return RedirectResponse(referer)
+        return RedirectResponse(request.url_for("admin:list", identity=self.identity))
 
 
 class AdminAuth(AuthenticationBackend):
@@ -674,15 +571,17 @@ class AdminAuth(AuthenticationBackend):
 
 def setup_admin(app):
     auth_backend = AdminAuth(secret_key=settings.SECRET_KEY)
-    admin = Admin(app, engine, title="TutorAI Admin", authentication_backend=auth_backend)
+    admin = Admin(
+        app,
+        engine,
+        title="TutorAI Admin",
+        authentication_backend=auth_backend,
+        templates_dir="app/templates",
+    )
     admin.add_view(StudentAdmin)
     admin.add_view(RegistrationProgressAdmin)
     admin.add_view(ConsultantRequestAdmin)
-    admin.add_view(ProgramAdmin)
-    admin.add_view(CourseModuleAdmin)
-    admin.add_view(TopicAdmin)
     admin.add_view(CourseMaterialAdmin)
-    admin.add_view(ScheduleItemAdmin)
     admin.add_view(AttestationTestAdmin)
     admin.add_view(StudentModuleProgressAdmin)
     admin.add_view(MessageAdmin)
