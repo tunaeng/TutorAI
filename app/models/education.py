@@ -21,7 +21,6 @@ class Student(Base):
     last_name: Mapped[str] = mapped_column(String(255), nullable=False)
     patronymic: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     phone: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
-    program_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     telegram_user_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True, unique=True)
     telegram_chat_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True, unique=True)
     max_user_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True, unique=True)
@@ -29,6 +28,7 @@ class Student(Base):
     status: Mapped[str] = mapped_column(String(50), server_default='active')
     flow_mode: Mapped[str] = mapped_column(String(50), server_default='tutor')
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    program_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     progress: Mapped[List["StudentModuleProgress"]] = relationship(
         "StudentModuleProgress", back_populates="student", cascade="all, delete-orphan"
@@ -51,12 +51,14 @@ class Student(Base):
     consultant_requests: Mapped[List["ConsultantRequest"]] = relationship(
         "ConsultantRequest", back_populates="student", cascade="all, delete-orphan"
     )
+    scenario_notifications: Mapped[List["ScenarioNotification"]] = relationship(
+        "ScenarioNotification", back_populates="student", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         Index('idx_students_telegram_user_id', 'telegram_user_id'),
         Index('idx_students_max_user_id', 'max_user_id'),
         Index('idx_students_phone', 'phone'),
-        Index('idx_students_program_id', 'program_id'),
     )
 
     def __str__(self):
@@ -298,3 +300,23 @@ class ConsultantRequest(Base):
 
     def __str__(self):
         return f"Заявка #{self.request_id} ({self.request_type}, {self.status})"
+
+
+class ScenarioNotification(Base):
+    __tablename__ = "scenario_notifications"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    history_line_row_key: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    app_number: Mapped[str] = mapped_column(Text, nullable=False)
+    student_id: Mapped[Optional[int]] = mapped_column(
+        BigInteger, ForeignKey('students.student_id', ondelete='CASCADE'), nullable=True
+    )
+    scenario_type: Mapped[str] = mapped_column(Text, nullable=False)
+    sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    student: Mapped[Optional["Student"]] = relationship(
+        "Student", back_populates="scenario_notifications", lazy='selectin'
+    )
+
+    def __str__(self):
+        return f"Уведомление #{self.id} ({self.scenario_type})"

@@ -28,7 +28,7 @@ from app.models.education import (
     Student, CourseMaterial,
     StudentModuleProgress, Message, RateLimit,
     AttestationTest, TestResult, Feedback,
-    RegistrationProgress, ConsultantRequest,
+    RegistrationProgress, ConsultantRequest, ScenarioNotification,
 )
 
 REQUEST_TYPE_LABELS = {
@@ -58,7 +58,8 @@ class StudentAdmin(ModelView, model=Student):
         Student.last_name, 
         Student.first_name, 
         Student.patronymic, 
-        Student.phone, 
+        Student.phone,
+        Student.program_name,
         Student.telegram_user_id, 
         Student.max_user_id,
         Student.created_at
@@ -71,7 +72,7 @@ class StudentAdmin(ModelView, model=Student):
         Student.phone: "Телефон",
         Student.status: "Статус",
         Student.flow_mode: "Режим (tutor / registration)",
-        Student.program_id: "ID программы",
+        Student.program_name: "Программа",
         Student.telegram_user_id: "Telegram ID",
         Student.telegram_chat_id: "Telegram Chat ID",
         Student.max_user_id: "Max ID",
@@ -82,6 +83,7 @@ class StudentAdmin(ModelView, model=Student):
         Student.last_name,
         Student.first_name,
         Student.phone,
+        Student.program_name,
         Student.telegram_user_id,
         Student.max_user_id
     ]
@@ -91,6 +93,7 @@ class StudentAdmin(ModelView, model=Student):
         Student.first_name,
         Student.patronymic,
         Student.phone,
+        Student.program_name,
         Student.telegram_user_id,
         Student.max_user_id,
         Student.created_at
@@ -100,7 +103,7 @@ class StudentAdmin(ModelView, model=Student):
         Student.first_name, 
         Student.patronymic, 
         Student.phone, 
-        Student.program_id,
+        Student.program_name,
         Student.status,
         Student.flow_mode,
         Student.telegram_user_id, 
@@ -552,6 +555,52 @@ class ConsultantRequestAdmin(ModelView, model=ConsultantRequest):
         return RedirectResponse(request.url_for("admin:list", identity=self.identity))
 
 
+class ScenarioNotificationAdmin(ModelView, model=ScenarioNotification):
+    name = "Уведомление сценария"
+    name_plural = "Уведомления сценариев"
+    icon = "fa-solid fa-bell"
+    can_export = True
+    column_list = [
+        ScenarioNotification.id,
+        ScenarioNotification.app_number,
+        ScenarioNotification.student,
+        ScenarioNotification.scenario_type,
+        ScenarioNotification.sent_at,
+    ]
+    column_labels = {
+        ScenarioNotification.id: "ID",
+        ScenarioNotification.history_line_row_key: "Ключ строки истории",
+        ScenarioNotification.app_number: "Номер заявки",
+        ScenarioNotification.student: "Студент",
+        ScenarioNotification.scenario_type: "Тип сценария",
+        ScenarioNotification.sent_at: "Отправлено",
+    }
+    column_sortable_list = [
+        ScenarioNotification.id,
+        ScenarioNotification.app_number,
+        ScenarioNotification.scenario_type,
+        ScenarioNotification.sent_at,
+    ]
+    column_searchable_list = [
+        ScenarioNotification.app_number,
+        ScenarioNotification.history_line_row_key,
+        ScenarioNotification.scenario_type,
+    ]
+    form_columns = [
+        ScenarioNotification.history_line_row_key,
+        ScenarioNotification.app_number,
+        ScenarioNotification.student,
+        ScenarioNotification.scenario_type,
+        ScenarioNotification.sent_at,
+    ]
+    form_ajax_refs = {
+        "student": {
+            "fields": ("last_name", "first_name", "phone"),
+            "order_by": "last_name",
+        }
+    }
+
+
 class AdminAuth(AuthenticationBackend):
     async def login(self, request: Request) -> bool:
         form = await request.form()
@@ -581,6 +630,7 @@ def setup_admin(app):
     admin.add_view(StudentAdmin)
     admin.add_view(RegistrationProgressAdmin)
     admin.add_view(ConsultantRequestAdmin)
+    admin.add_view(ScenarioNotificationAdmin)
     admin.add_view(CourseMaterialAdmin)
     admin.add_view(AttestationTestAdmin)
     admin.add_view(StudentModuleProgressAdmin)
